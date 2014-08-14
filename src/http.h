@@ -16,17 +16,20 @@
 #ifndef _HTTP_H
 #define _HTTP_H
 
-typedef enum http_status_code 
-{
-	HTTP_CODE_OK					=	200,     /**< The request completed successfully */
-	HTTP_CODE_BAD_REQUEST           =   400,     /**< The request is malformed */
-	HTTP_CODE_NOT_FOUND             =   404,     /**< The requested resource was not found */
-	HTTP_CODE_INTERNAL_SERVER_ERROR =   500,     /**< Server processing or configuration error. No response generated */
+#define MAX_PATH_NAME	256
 
-	HTTP_CODE_NOT_IMPLEMENTED       =   501,     /**< The server does not recognize the request or method */
-	HTTP_CODE_SERVICE_UNAVAILABLE   =   503,     /**< The server is currently unavailable or overloaded */
-	HTTP_CODE_BAD_VERSION           =   505,     /**< The server does not support the HTTP protocol version */
-}http_status_code_t;
+typedef enum http_resp_status_code 
+{
+	HTTP_CODE_OK					=	200,     /* The request completed successfully */
+	HTTP_CODE_BAD_REQUEST           =   400,     /* The request is malformed */
+	HTTP_CODE_NOT_FOUND             =   404,     /* The requested resource was not found */
+	HTTP_CODE_LENGTH_REQUIRED			=   411,     /* length required for POSTs */
+	HTTP_CODE_INTERNAL_SERVER_ERROR =   500,     /* Server processing or configuration error. No response generated */
+
+	HTTP_CODE_NOT_IMPLEMENTED       =   501,     /* The server does not recognize the request or method */
+	HTTP_CODE_SERVICE_UNAVAILABLE   =   503,     /* The server is currently unavailable or overloaded */
+	HTTP_CODE_BAD_VERSION           =   505,     /* The server does not support the HTTP protocol version */
+}http_resp_status_code_t;
 
 typedef enum http_parse_status
 {	
@@ -46,6 +49,15 @@ typedef enum http_method
 	HTTP_METHOD_POST,
 	HTTP_METHOD_UNKNOWN,
 }http_method_t;
+
+enum http_conn_type
+{
+	HTTP_CONN_TYPE_NONE,
+	HTTP_CONN_TYPE_KEEPALIVE,
+	HTTP_CONN_TYPE_CLOSE,
+	HTTP_CONN_TYPE_UNKNOWN,
+};
+
 
 void http_parser_handler();
 void http_parser_disconnect_handler();

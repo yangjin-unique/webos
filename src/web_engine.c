@@ -3,7 +3,7 @@
  *
  *       Filename:  web_engine.c
  *
- *    Description:  
+ *    Description: select engine implementation 
  *
  *        Version:  1.0
  *       Revision:  none
@@ -85,6 +85,7 @@ handle_read_events(web_engine_t *engine, web_connection_t *conn)
 	conn->rbuf[nread] = 0;
 	printf("recv %d bytes: %s\n", nread, conn->rbuf);
 	conn->rsize = nread;
+	conn->prbuf = conn->rbuf;
 #if 0
 	if (send(conn->connfd, conn->rbuf, nread, 0) != nread)
 	{

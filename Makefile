@@ -14,6 +14,7 @@ OBJECTS += connection.o
 OBJECTS += http.o
 OBJECTS += log.o
 OBJECTS += slist.o
+OBJECTS += util.o
 
 default: webos
 

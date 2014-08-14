@@ -3,7 +3,8 @@
  *
  *       Filename:  connection.c
  *
- *    Description:  
+ *    Description: connection layer under select engine. we put all active connections
+ *				   in a poll.
  *
  *        Version:  1.0
  *       Revision:  none

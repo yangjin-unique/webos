@@ -17,6 +17,16 @@
 #define _CONNECTION_H
 
 #include <netinet/in.h>
+
+
+typedef struct file_info
+{
+	int		fd;
+	int		size;
+	time_t	mtime; /* last modified time */
+	char	*fbuf;
+}file_info_t;
+
 /* per connection structure */
 typedef struct web_connection
 {
@@ -24,18 +34,24 @@ typedef struct web_connection
 	int						connfd;
 	struct sockaddr_in		cliaddr;
 #define READ_BUF_SIZE	8*1024
-#define WRITE_BUF_SIZE	8*1024
+#define WRITE_BUF_SIZE	1*1024
 	char					*rbuf; /* read buffer */
 	char					*wbuf; /* write buffer */
 	char					*prbuf; /* currently parsed position in rbuf, used for http parser */
 	int						rsize; /* read buffer size */
 	int						wsize; /* write buffer size */
-	/* http parsed params */
+	/* http state machine */
 	int						status;
+	/* http parsed params */
 	int						method; /* http request method: GET, HEAD, POST */
 	char					*host;
 	char					*proto; /* HTTP protocol version (HTTP/1.1) */
 	char					*uri;
+	char					*user_agent;
+	int						cont_type; /* content type */
+	int						cont_len; /* content length */
+	int						conn_type; /* connection type: keep-alive, close */
+	file_info_t				*finfo;
 }web_connection_t;
 
 /* connection pool, hold all active conntions */

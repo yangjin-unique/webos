@@ -21,7 +21,10 @@
 #include "http.h"
 #include "log.h"
 #include "string.h"
-#define USAGE	"\nUsage: %s <port> <log_file>\n"
+#define USAGE	"\nUsage: %s <port> <www folder> <log_file>\n"
+
+
+char g_www_root_folder[MAX_PATH_NAME];
 
 int
 main(int argc, char **argv)
@@ -31,14 +34,16 @@ main(int argc, char **argv)
 
 	web_engine_t engine;
 	
-	if (argc < 3)
+	if (argc < 4)
 	{
 		fprintf(stdout, USAGE, argv[0]);
 		return -1;
 	}
 	memset(&engine, 0, sizeof(engine));
 	engine.http_port = atoi(argv[1]);
-	log_file = argv[2];
+	strcpy(g_www_root_folder, argv[2]);
+	printf("www: %s\n", g_www_root_folder);
+	log_file = argv[3];
 	//lock_file = argv[3];
 
 	
