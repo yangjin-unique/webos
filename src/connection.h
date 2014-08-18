@@ -24,6 +24,7 @@ typedef struct file_info
 	int		fd;
 	int		size;
 	time_t	mtime; /* last modified time */
+	int		type; /* file type: html, css, jpeg, png, gif, ... */
 	char	*fbuf;
 }file_info_t;
 

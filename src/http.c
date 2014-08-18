@@ -127,21 +127,24 @@ get_time_str(time_t now)
 size_t
 read_nbytes(int fd, char *buf, size_t size)
 {
-	size_t n = 0, nbytesread = 0, nbytesleft = size;
+	size_t nread = 0, nleft = size;
 
-	while (nbytesleft > 0)
+	while (nleft > 0)
 	{
-		n = read(fd, buf + nbytesread, nbytesleft);
-		printf("read %d bytes, size=%d\n", n, size);
-		if (n <= 0)
+		nread = read(fd, buf, nleft);
+		printf("read %d bytes, size=%d\n", nread, size);
+		if (nread < 0)
 		{
 			web_log(WEB_LOG_ERROR, "read failed\n");
 			return -1;
 		}
-		nbytesread += n;
-		nbytesleft -= n;
+		else if (nread == 0) /* EOF */
+			break;
+
+		buf += nread;
+		nleft -= nread;
 	}
-	return nbytesread;
+	return (size - nleft);
 }
 
 
@@ -179,7 +182,7 @@ prepare_file(web_connection_t *conn, char *uri, http_resp_status_code_t *code)
 
 	if (S_ISDIR(stat_buf.st_mode))
 	{
-
+		/* the default page */
 		*(path + strlen(g_www_root_folder)) = '\0';
 		strcat(path, "/index.html");	
 		stat(path, &stat_buf);
@@ -248,20 +251,13 @@ build_resp_header(web_connection_t *conn)
 	}
 	else if (conn->status == HTTP_PARSE_END)
 	{
-		switch (conn->method)
-		{
-			case HTTP_METHOD_GET:
-				load_file(conn);
-			case HTTP_METHOD_HEAD:
-				len = add_head_line(buf + size, "Connection", "keep-alive");
-				size += len;
-				snprintf(str, 16, "%d", conn->finfo->size);
-				len = add_head_line(buf + size, "Content-length", str);
-				size += len;
-				break;
-		}
+		if (conn->conn_type == HTTP_CONN_TYPE_KEEPALIVE)
+			len = add_head_line(buf + size, "Connection", "keep-alive");
+		else
+			len = add_head_line(buf + size, "Connection", "close");	
+		size += len;
 	}
-
+	/* date field */
 	pstr = get_time_str(time(NULL));
 	if (pstr != NULL)
 	{
@@ -269,10 +265,31 @@ build_resp_header(web_connection_t *conn)
 		size += len;
 		free(pstr);
 	}
-	/* add server field */
+	/* server field */
 	len = add_head_line(buf + size, "Server", "webos");
 	size += len;
-	
+
+	/* content length */
+	if (conn->status == HTTP_PARSE_END && conn->method == HTTP_METHOD_GET)
+	{
+		load_file(conn);
+		snprintf(str, 16, "%d", conn->finfo->size);
+		len = add_head_line(buf + size, "Content-length", str);
+		size += len;
+
+		/* content type */
+		/* Todo */
+
+	}
+
+	/* last modified time */
+	pstr = get_time_str(conn->finfo->mtime);
+	if (pstr != NULL)
+	{
+		len = add_head_line(buf + size, "Last-Modified", pstr);
+		size += len;
+		free(pstr);
+	}
 	sprintf(buf + size, "\r\n");/* header last line: \r\n */
 	conn->wsize += size + 2;
 }

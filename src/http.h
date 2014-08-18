@@ -58,6 +58,15 @@ enum http_conn_type
 	HTTP_CONN_TYPE_UNKNOWN,
 };
 
+enum http_content_type
+{
+	HTTP_CONTENT_TYPE_HTML,
+	HTTP_CONTENT_TYPE_CSS,
+	HTTP_CONTENT_TYPE_JPEG,
+	HTTP_CONTENT_TYPE_PNG,
+	HTTP_CONTENT_TYPE_GIF,
+	HTTP_CONTENT_TYPE_OTHER,
+};
 
 void http_parser_handler();
 void http_parser_disconnect_handler();
