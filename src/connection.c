@@ -179,6 +179,12 @@ remove_conn_from_pool(web_conn_pool_t *pool, web_connection_t *conn)
 		free(conn->wbuf);
 		conn->wbuf = NULL;
 	}
+	if (conn->finfo != NULL)
+	{
+		if (conn->finfo->fbuf != NULL)
+			free(conn->finfo->fbuf);
+		free(conn->finfo);
+	}
 	pool->size--;
 	if (conn != NULL)
 		free(conn);

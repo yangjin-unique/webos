@@ -27,6 +27,7 @@ typedef struct web_engine
 	web_conn_pool_t		conn_pool; /* put all active conns in a list pool */
 	void	(*http_parser_handler)(web_connection_t *conn);
 	void	(*http_parser_disconnect_handler)(web_connection_t *conn);
+	void	(*http_send_response)(web_connection_t *conn);
 }web_engine_t;
 
 

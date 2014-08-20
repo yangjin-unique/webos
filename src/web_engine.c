@@ -20,6 +20,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/select.h>
 #include <unistd.h>
 #include <sys/time.h>
 #include "web_engine.h"
@@ -37,6 +38,7 @@ web_engine_creat(web_engine_t *engine)
 	engine->http_listen_fd = web_sock_open(engine->http_port);
 	engine->http_parser_handler = http_parser_handler;
 	engine->http_parser_disconnect_handler = http_parser_disconnect_handler;
+	engine->http_send_response = http_send_resp;
 }
 
 
@@ -79,11 +81,12 @@ handle_read_events(web_engine_t *engine, web_connection_t *conn)
 	if (nread <= 0)
 	{
 		/* connection closed by client */
-		remove_conn_from_pool(&engine->conn_pool, conn);
+		/* ----------Todo: when to free connection----------- */
+		//remove_conn_from_pool(&engine->conn_pool, conn);
 		return;
 	}
 	conn->rbuf[nread] = 0;
-	printf("recv %d bytes: %s\n", nread, conn->rbuf);
+	//printf("recv %d bytes: %s\n", nread, conn->rbuf);
 	conn->rsize = nread;
 	conn->prbuf = conn->rbuf;
 #if 0
@@ -99,10 +102,16 @@ handle_read_events(web_engine_t *engine, web_connection_t *conn)
 
 /* handle write evevts for active connection */
 void
-handle_write_events(web_connection_t *conn)
+handle_write_events(web_engine_t *engine, web_connection_t *conn)
 {
 	/* todo */
-	//printf("handle write events ...\n");
+	engine->http_send_response(conn);
+	
+	if (IS_CONN_CLOSE(conn))
+	{
+		printf("remove a connection\n");
+		remove_conn_from_pool(&engine->conn_pool, conn);
+	}//printf("handle write events ...\n");
 }
 
 
@@ -124,6 +133,11 @@ process_events(web_engine_t *engine, int nready, fd_set *readfds, fd_set *writef
 	conn = get_first_conn_from_pool(&engine->conn_pool);
 	while (conn != NULL && nready != 0)
 	{
+		if (conn->connfd < 0 || conn->connfd > FD_SETSIZE)
+		{
+			printf("----------------->wrong fd=%d\n", conn->connfd);
+			continue;
+		}
 		if (FD_ISSET(conn->connfd, readfds))
 		{
 			/* todo */
@@ -132,7 +146,7 @@ process_events(web_engine_t *engine, int nready, fd_set *readfds, fd_set *writef
 		}
 		if (FD_ISSET(conn->connfd, writefds))			
 		{	/* todo */
-			handle_write_events(conn);
+			handle_write_events(engine, conn);
 			nready--;
 		}
 		conn = get_next_conn_from_pool(conn);
@@ -156,8 +170,8 @@ select_engine(web_engine_t *engine, fd_set *readfds, fd_set *writefds)
 	{
 		/* Todo: redesign */
 		FD_SET(conn->connfd, readfds);
-
-		FD_SET(conn->connfd, writefds);
+		if (IS_CONN_WRITE(conn))
+			FD_SET(conn->connfd, writefds);
 
 		if(conn->connfd > g_max_sock_fd)
 			g_max_sock_fd = conn->connfd;

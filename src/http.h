@@ -16,6 +16,8 @@
 #ifndef _HTTP_H
 #define _HTTP_H
 
+#include "connection.h"
+
 #define MAX_PATH_NAME	256
 
 typedef enum http_resp_status_code 
@@ -58,7 +60,7 @@ enum http_conn_type
 	HTTP_CONN_TYPE_UNKNOWN,
 };
 
-enum http_content_type
+typedef enum http_content_type
 {
 	HTTP_CONTENT_TYPE_HTML,
 	HTTP_CONTENT_TYPE_CSS,
@@ -66,11 +68,11 @@ enum http_content_type
 	HTTP_CONTENT_TYPE_PNG,
 	HTTP_CONTENT_TYPE_GIF,
 	HTTP_CONTENT_TYPE_OTHER,
-};
+}http_content_type_t;
 
-void http_parser_handler();
-void http_parser_disconnect_handler();
-
+void http_parser_handler(web_connection_t *conn);
+void http_parser_disconnect_handler(web_connection_t *conn);
+void http_send_resp(web_connection_t *conn);
 
 
 #endif

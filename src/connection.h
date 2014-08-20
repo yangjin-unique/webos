@@ -19,6 +19,15 @@
 #include <netinet/in.h>
 
 
+/* connection flag bit use */
+#define CONN_FLAG_CLOSE			0x0001 /* connection to be closed */
+#define	CONN_FLAG_WRITE			0x0002 /* conn has data to write */
+
+#define SET_CONN_CLOSE(conn)	(((conn)->flag) |= CONN_FLAG_CLOSE)
+#define IS_CONN_CLOSE(conn)		!!(((conn)->flag) & CONN_FLAG_CLOSE)
+#define SET_CONN_WRITE(conn)	(((conn)->flag) |= CONN_FLAG_WRITE)
+#define IS_CONN_WRITE(conn)		!!(((conn)->flag) & CONN_FLAG_WRITE)
+
 typedef struct file_info
 {
 	int		fd;
@@ -53,6 +62,7 @@ typedef struct web_connection
 	int						cont_len; /* content length */
 	int						conn_type; /* connection type: keep-alive, close */
 	file_info_t				*finfo;
+	unsigned int			flag;
 }web_connection_t;
 
 /* connection pool, hold all active conntions */

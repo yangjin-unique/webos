@@ -15,7 +15,6 @@
  */
 #include <stdio.h>
 #include "http.h"
-#include "connection.h"
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
@@ -64,7 +63,7 @@ get_token(web_connection_t *conn, char *delim)
 	}
 	/* move prbuf to next token */
 	conn->prbuf = next_token;
-	printf("prbuf=%x (%d)\n", (unsigned int)conn->prbuf, (conn->prbuf == (conn->rbuf+conn->rsize)));
+	//printf("prbuf=%x (%d)\n", (unsigned int)conn->prbuf, (conn->prbuf == (conn->rbuf+conn->rsize)));
 	return token;
 }
 
@@ -124,6 +123,46 @@ get_time_str(time_t now)
 }
 
 
+http_content_type_t
+get_file_type(char *path)
+{
+	char *ext;
+
+	ext = strrchr(path, '.');
+	if (ext == NULL)
+		return HTTP_CONTENT_TYPE_OTHER;
+	if (strcmp(ext, ".html") == 0)
+		return HTTP_CONTENT_TYPE_HTML;
+	else if (strcmp(ext, ".jpeg") == 0)
+		return HTTP_CONTENT_TYPE_JPEG;
+	else if (strcmp(ext, ".png") == 0)
+		return HTTP_CONTENT_TYPE_PNG;
+	else if (strcmp(ext, ".css") == 0)
+		return HTTP_CONTENT_TYPE_CSS;
+	else if (strcmp(ext, ".gif") == 0)
+		return HTTP_CONTENT_TYPE_GIF;
+	else 
+		return HTTP_CONTENT_TYPE_OTHER;
+}
+
+char *
+get_content_type(http_content_type_t type)
+{
+	char *type2str[] = {	
+						"text/html",
+						"text/css",
+						"text/jpeg",
+						"text/png",
+						"text/gif",
+						"application/octet-stream"
+					   };
+	if (type < 0 || type > HTTP_CONTENT_TYPE_OTHER)
+		return type2str[HTTP_CONTENT_TYPE_OTHER];
+	else
+		return type2str[type];
+}
+
+
 size_t
 read_nbytes(int fd, char *buf, size_t size)
 {
@@ -132,7 +171,6 @@ read_nbytes(int fd, char *buf, size_t size)
 	while (nleft > 0)
 	{
 		nread = read(fd, buf, nleft);
-		printf("read %d bytes, size=%d\n", nread, size);
 		if (nread < 0)
 		{
 			web_log(WEB_LOG_ERROR, "read failed\n");
@@ -164,14 +202,11 @@ prepare_file(web_connection_t *conn, char *uri, http_resp_status_code_t *code)
 		return -1;
 	}
 	memset(finfo, 0, sizeof(file_info_t));
-	printf("www=%s\n", g_www_root_folder);
 	strcpy(path, g_www_root_folder);
 	if (*(path + strlen(path) -1) == '/')
 		*(path + strlen(path) - 1) = '\0';
 
 	strcat(path, uri);
-	printf("get file = %s\n", path);
-
 	if (stat(path, &stat_buf) < 0)
 	{
 		web_log(WEB_LOG_ERROR, "file fstat failed\n");
@@ -186,7 +221,6 @@ prepare_file(web_connection_t *conn, char *uri, http_resp_status_code_t *code)
 		*(path + strlen(g_www_root_folder)) = '\0';
 		strcat(path, "/index.html");	
 		stat(path, &stat_buf);
-		printf("get file = %s\n", path);
 	}
 	if ((finfo->fd = (open(path, O_RDONLY))) < 0)
 	{
@@ -198,8 +232,8 @@ prepare_file(web_connection_t *conn, char *uri, http_resp_status_code_t *code)
 	
 	finfo->size = (int) stat_buf.st_size;
 	finfo->mtime = stat_buf.st_mtime;
-	printf("file size = %d\n", finfo->size);
-
+	finfo->type = get_file_type(path);
+	finfo->fbuf = NULL;
 	conn->finfo = finfo;
 	return 0;
 }
@@ -219,6 +253,7 @@ load_file(web_connection_t *conn)
 		web_log(WEB_LOG_ERROR, "file buffer malloc failed\n");
 	}
 	read_nbytes(finfo->fd, finfo->fbuf, finfo->size);
+	close(finfo->fd);
 }
 
 int
@@ -236,7 +271,6 @@ add_head_line(char *buf, char *key, char *value)
 void 
 build_resp_header(web_connection_t *conn)
 {
-	/* todo */
 	char *pstr;
 	char str[16];
 	char *buf = conn->wbuf + conn->wsize;
@@ -245,52 +279,64 @@ build_resp_header(web_connection_t *conn)
 	if (conn->status == HTTP_PARSE_ERROR)
 	{
 		/* add connection field*/
-		len = add_head_line(buf + size, "Connection", "close");
+		len = add_head_line(buf+size, "Connection", "close");
 		size += len;
+		SET_CONN_CLOSE(conn);
 		/* todo: close connection */
 	}
 	else if (conn->status == HTTP_PARSE_END)
 	{
 		if (conn->conn_type == HTTP_CONN_TYPE_KEEPALIVE)
-			len = add_head_line(buf + size, "Connection", "keep-alive");
-		else
-			len = add_head_line(buf + size, "Connection", "close");	
+			len = add_head_line(buf+size, "Connection", "keep-alive");
+		else 
+		{
+			len = add_head_line(buf+size, "Connection", "close");	
+			SET_CONN_CLOSE(conn);
+		}
 		size += len;
 	}
+
+	/* Todo: remove this line */
+	SET_CONN_CLOSE(conn);
+
 	/* date field */
 	pstr = get_time_str(time(NULL));
 	if (pstr != NULL)
 	{
-		len = add_head_line(buf + size, "Date", pstr);
+		len = add_head_line(buf+size, "Date", pstr);
 		size += len;
 		free(pstr);
 	}
 	/* server field */
-	len = add_head_line(buf + size, "Server", "webos");
+	len = add_head_line(buf+size, "Server", "webos");
 	size += len;
 
 	/* content length */
-	if (conn->status == HTTP_PARSE_END && conn->method == HTTP_METHOD_GET)
+	if (conn->status == HTTP_PARSE_END && 
+			(conn->method == HTTP_METHOD_GET || conn->method == HTTP_METHOD_HEAD))
 	{
-		load_file(conn);
 		snprintf(str, 16, "%d", conn->finfo->size);
-		len = add_head_line(buf + size, "Content-length", str);
+		len = add_head_line(buf+size, "Content-Length", str);
 		size += len;
 
 		/* content type */
-		/* Todo */
-
-	}
-
-	/* last modified time */
-	pstr = get_time_str(conn->finfo->mtime);
-	if (pstr != NULL)
-	{
-		len = add_head_line(buf + size, "Last-Modified", pstr);
+		len = add_head_line(buf+size, "Content-Type",get_content_type(conn->finfo->type));
 		size += len;
-		free(pstr);
+
+		/* last modified time */
+		pstr = get_time_str(conn->finfo->mtime);
+		if (pstr != NULL)
+		{
+			len = add_head_line(buf+size, "Last-Modified", pstr);
+			size += len;
+			free(pstr);
+		}
+
+		if (conn->method == HTTP_METHOD_GET)
+			load_file(conn);
 	}
-	sprintf(buf + size, "\r\n");/* header last line: \r\n */
+	
+	sprintf(buf+size, "\r\n");/* header last line: \r\n */
 	conn->wsize += size + 2;
 }
 
@@ -300,17 +346,17 @@ http_send_resp(web_connection_t *conn)
 {
 	int nbytes;
 
-	printf("send response now ...\n");
+	//printf("send response now ...\n");
 	if ((nbytes = send(conn->connfd, conn->wbuf, conn->wsize, MSG_DONTWAIT)) != conn->wsize)
 	{
 		web_log(WEB_LOG_ERROR, "send failed: only %d bytes sent\n", nbytes);
 		return;
 	}
 	conn->wbuf[conn->wsize] = 0;
-	printf("Response:\n%s\n", conn->wbuf);
+	//printf("Response:\n%s\n", conn->wbuf);
 	if (conn->finfo != NULL && conn->finfo->fbuf != NULL)
 	{
-		printf("send file now...");
+		//printf("send file now...");
 		if ((nbytes = send(conn->connfd, conn->finfo->fbuf, 
 						conn->finfo->size, MSG_DONTWAIT) != conn->finfo->size))
 		{
@@ -319,7 +365,6 @@ http_send_resp(web_connection_t *conn)
 			return;
 		}
 	}
-	return;
 }
 
 
@@ -327,10 +372,10 @@ void
 http_response(web_connection_t *conn, http_resp_status_code_t code)
 {
 	/* todo */
-
+	SET_CONN_WRITE(conn); /* set write flag */
 	build_resp_status_line(conn, code);
-	build_resp_header(conn);
-	http_send_resp(conn);
+	if (conn->status != HTTP_PARSE_ERROR)
+		build_resp_header(conn);
 }
 
 
@@ -371,7 +416,7 @@ parse_request_line(web_connection_t *conn)
 
 	/******* parse method *******/
 	method = get_token(conn, 0);
-	printf("method=%s\n", method);
+	//printf("method=%s\n", method);
 	if (method == NULL || *method == '\0')
 	{
 		code = HTTP_CODE_BAD_REQUEST;
@@ -388,7 +433,7 @@ parse_request_line(web_connection_t *conn)
 
 	/*******  parse uri  *******/
 	uri = get_token(conn, 0);
-	printf("url=%s\n", uri);
+	//printf("url=%s\n", uri);
 	if (uri == NULL || *uri == '\0')
 	{
 		code = HTTP_CODE_BAD_REQUEST;
@@ -400,7 +445,7 @@ parse_request_line(web_connection_t *conn)
 
 	/******** parse http version *******/
 	ver = get_token(conn, "\r\n");
-	printf("http version=%s\n", ver);
+	//printf("http version=%s\n", ver);
 	if (ver == NULL || *ver == '\0')
 	{
 		code = HTTP_CODE_BAD_REQUEST;
@@ -422,6 +467,7 @@ parse_request_line(web_connection_t *conn)
 err:	
 	/* Todo: if need to close conn and free conn ???? */
 	conn->status = HTTP_PARSE_ERROR;
+	SET_CONN_CLOSE(conn);
 	return code;
 }
 
@@ -437,7 +483,7 @@ parse_header(web_connection_t *conn)
 	char *value = NULL;
 	int flag = 0;
 
-	printf("...... parse header .....\n");
+	//printf("...... parse header .....\n");
 	
 	while ((token = get_token(conn, "\r\n")) != NULL)
 	{
@@ -489,7 +535,6 @@ parse_header(web_connection_t *conn)
 			goto err;
 	}
 
-
 	if (conn->method == HTTP_METHOD_GET || conn->method == HTTP_METHOD_HEAD)
 		conn->status = HTTP_PARSE_END; /* todo */
 	else if (conn->method == HTTP_METHOD_POST)
@@ -499,6 +544,7 @@ parse_header(web_connection_t *conn)
 	return code;
 err:
 	conn->status = HTTP_PARSE_ERROR;
+	SET_CONN_CLOSE(conn);
 	return code;
 }
 
@@ -549,7 +595,7 @@ http_parser_handler(web_connection_t *conn)
 }
 
 void
-http_parser_disconnect_handler()
+http_parser_disconnect_handler(web_connection_t *conn)
 {
 	/* todo */
 }
