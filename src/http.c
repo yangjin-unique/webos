@@ -340,7 +340,7 @@ build_resp_header(web_connection_t *conn)
 	conn->wsize += size + 2;
 }
 
-
+#if 0
 void
 http_send_resp(web_connection_t *conn)
 {
@@ -366,7 +366,7 @@ http_send_resp(web_connection_t *conn)
 		}
 	}
 }
-
+#endif
 
 void
 http_response(web_connection_t *conn, http_resp_status_code_t code)

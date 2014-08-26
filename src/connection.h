@@ -17,16 +17,19 @@
 #define _CONNECTION_H
 
 #include <netinet/in.h>
-
+#include "ssl.h"
 
 /* connection flag bit use */
 #define CONN_FLAG_CLOSE			0x0001 /* connection to be closed */
 #define	CONN_FLAG_WRITE			0x0002 /* conn has data to write */
+#define CONN_FLAG_SSL			0x0004 /* connection use ssl */
 
 #define SET_CONN_CLOSE(conn)	(((conn)->flag) |= CONN_FLAG_CLOSE)
 #define IS_CONN_CLOSE(conn)		!!(((conn)->flag) & CONN_FLAG_CLOSE)
 #define SET_CONN_WRITE(conn)	(((conn)->flag) |= CONN_FLAG_WRITE)
 #define IS_CONN_WRITE(conn)		!!(((conn)->flag) & CONN_FLAG_WRITE)
+#define SET_CONN_SSL(conn)		(((conn)->flag) |= CONN_FLAG_SSL)
+#define IS_CONN_SSL(conn)		!!(((conn)->flag) & CONN_FLAG_SSL)
 
 typedef struct file_info
 {
@@ -50,6 +53,7 @@ typedef struct web_connection
 	char					*prbuf; /* currently parsed position in rbuf, used for http parser */
 	int						rsize; /* read buffer size */
 	int						wsize; /* write buffer size */
+	SSL						*ssl; /* ssl context */
 	/* http state machine */
 	int						status;
 	/* http parsed params */
@@ -74,9 +78,11 @@ typedef struct web_conn_pool
 
 
 int web_sock_open(int port);
+void init_conn_pool(web_conn_pool_t *pool);
 web_connection_t *get_first_conn_from_pool(web_conn_pool_t *pool);
 web_connection_t *get_next_conn_from_pool(web_connection_t *conn);
-web_connection_t *alloc_new_connection(int fd, struct sockaddr_in *cliaddr, socklen_t clilen);
+web_connection_t *alloc_https_connection(SSL_CTX *ssl_ctx, int fd, struct sockaddr_in *cliaddr, socklen_t clilen);
+web_connection_t * alloc_http_connection(int fd, struct sockaddr_in *cliaddr, socklen_t clilen);
 void print_all_connections(web_conn_pool_t *pool);
 void add_conn_to_pool(web_conn_pool_t *pool, web_connection_t *conn);
 void remove_conn_from_pool(web_conn_pool_t *pool, web_connection_t *conn);

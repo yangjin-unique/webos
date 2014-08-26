@@ -1,0 +1,61 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 1 (0x1)
+    Signature Algorithm: sha1WithRSAEncryption
+        Issuer: C=CH, ST=China, L=SH, O=webos, OU=webos, CN=webos.ddns.net/emailAddress=yj@webos.net
+        Validity
+            Not Before: Aug 25 06:46:57 2014 GMT
+            Not After : Aug 25 06:46:57 2015 GMT
+        Subject: C=CH, ST=China, L=SH, O=webos, OU=webos, CN=webos.ddns.net/emailAddress=yj@webos.net
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (1024 bit)
+                Modulus:
+                    00:c5:5c:34:63:bf:96:73:56:f7:d8:dc:92:5a:24:
+                    34:cf:ab:13:02:7d:ec:83:c0:81:d7:77:ee:78:16:
+                    68:74:77:85:a5:43:1e:cc:38:bf:52:52:81:26:ca:
+                    70:c0:15:55:c4:03:7e:db:04:31:f7:40:34:d9:43:
+                    3f:dc:97:fd:f6:74:a1:ee:d5:f5:51:ba:79:25:34:
+                    1e:59:f7:55:66:e7:b1:e1:7d:df:85:16:61:fd:44:
+                    f5:b7:50:00:b7:0a:4e:91:4a:e9:03:4a:a7:31:85:
+                    08:ca:87:e9:f1:f7:98:08:ab:4a:15:46:d9:14:9a:
+                    92:f3:98:c2:7b:25:45:30:f3
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Comment: 
+                OpenSSL Generated Certificate
+            X509v3 Subject Key Identifier: 
+                B6:2C:AC:E9:20:12:4D:7F:B2:30:CF:09:AB:61:7B:4E:B1:FB:61:1E
+            X509v3 Authority Key Identifier: 
+                keyid:9B:08:B2:98:16:C1:41:45:BA:EB:84:A4:9A:21:9F:25:5C:DD:AC:2B
+
+    Signature Algorithm: sha1WithRSAEncryption
+         bd:43:b5:71:17:e5:e9:a1:64:88:30:e1:7f:67:f7:89:d6:c5:
+         f6:64:80:dc:de:60:7c:58:3e:f1:b9:06:1a:06:43:5a:e0:ab:
+         d5:e3:3d:0c:d6:98:f0:f7:11:ad:e7:64:76:19:da:8f:71:50:
+         9b:96:60:74:27:69:41:8c:ad:cb:bf:76:60:26:66:d8:66:a7:
+         6d:3b:4b:4b:8b:d9:ba:c0:d7:06:ad:18:58:c0:85:74:39:dc:
+         7e:d5:1b:50:87:c9:e9:59:de:e5:88:33:0e:dc:85:78:c9:ce:
+         03:c6:10:93:76:51:02:98:59:e9:27:46:86:13:7f:e8:c0:d9:
+         9a:3c
+-----BEGIN CERTIFICATE-----
+MIIC8zCCAlygAwIBAgIBATANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCQ0gx
+DjAMBgNVBAgMBUNoaW5hMQswCQYDVQQHDAJTSDEOMAwGA1UECgwFd2Vib3MxDjAM
+BgNVBAsMBXdlYm9zMRcwFQYDVQQDDA53ZWJvcy5kZG5zLm5ldDEbMBkGCSqGSIb3
+DQEJARYMeWpAd2Vib3MubmV0MB4XDTE0MDgyNTA2NDY1N1oXDTE1MDgyNTA2NDY1
+N1owgYAxCzAJBgNVBAYTAkNIMQ4wDAYDVQQIDAVDaGluYTELMAkGA1UEBwwCU0gx
+DjAMBgNVBAoMBXdlYm9zMQ4wDAYDVQQLDAV3ZWJvczEXMBUGA1UEAwwOd2Vib3Mu
+ZGRucy5uZXQxGzAZBgkqhkiG9w0BCQEWDHlqQHdlYm9zLm5ldDCBnzANBgkqhkiG
+9w0BAQEFAAOBjQAwgYkCgYEAxVw0Y7+Wc1b32NySWiQ0z6sTAn3sg8CB13fueBZo
+dHeFpUMezDi/UlKBJspwwBVVxAN+2wQx90A02UM/3Jf99nSh7tX1Ubp5JTQeWfdV
+Zuex4X3fhRZh/UT1t1AAtwpOkUrpA0qnMYUIyofp8feYCKtKFUbZFJqS85jCeyVF
+MPMCAwEAAaN7MHkwCQYDVR0TBAIwADAsBglghkgBhvhCAQ0EHxYdT3BlblNTTCBH
+ZW5lcmF0ZWQgQ2VydGlmaWNhdGUwHQYDVR0OBBYEFLYsrOkgEk1/sjDPCathe06x
++2EeMB8GA1UdIwQYMBaAFJsIspgWwUFFuuuEpJohnyVc3awrMA0GCSqGSIb3DQEB
+BQUAA4GBAL1DtXEX5emhZIgw4X9n94nWxfZkgNzeYHxYPvG5BhoGQ1rgq9XjPQzW
+mPD3Ea3nZHYZ2o9xUJuWYHQnaUGMrcu/dmAmZthmp207S0uL2brA1watGFjAhXQ5
+3H7VG1CHyelZ3uWIMw7chXjJzgPGEJN2UQKYWeknRoYTf+jA2Zo8
+-----END CERTIFICATE-----

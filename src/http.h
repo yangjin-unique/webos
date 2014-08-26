@@ -72,7 +72,6 @@ typedef enum http_content_type
 
 void http_parser_handler(web_connection_t *conn);
 void http_parser_disconnect_handler(web_connection_t *conn);
-void http_send_resp(web_connection_t *conn);
 
 
 #endif

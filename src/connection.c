@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/time.h>
 #include "log.h"
 #include "slist.h"
@@ -85,6 +86,55 @@ get_next_conn_from_pool(web_connection_t *conn)
 }
 
 
+int
+set_nonblock(int fd)
+{
+	int flag;
+	
+	flag = fcntl(fd, F_GETFL, 0);
+	if (fcntl(fd, F_SETFL, flag | O_NONBLOCK) < 0)
+	{
+		web_log(WEB_LOG_ERROR, "connection fd set nonblock failed (cause: %s)\n", strerror(errno));
+		return -1;
+	}
+	return 0;
+}
+
+
+/* set ssl connection params */ 
+SSL *
+get_ssl_ctx(SSL_CTX *ssl_ctx, int fd)
+{
+	SSL *cli_ctx;
+	int ret;
+
+	cli_ctx = SSL_new(ssl_ctx);
+	if (cli_ctx == NULL)
+	{
+		web_log(WEB_LOG_ERROR, "creat client ssl context failed (SSL_new: %s)\n",
+						ERR_reason_error_string(ERR_get_error()));
+		return NULL;
+	}
+	if (SSL_set_fd(cli_ctx, fd) <= 0)
+	{
+		web_log(WEB_LOG_ERROR, "creat client ssl context failed (SSL_set_fd: %s)\n",
+						ERR_reason_error_string(ERR_get_error()));
+		SSL_free(cli_ctx);
+		return NULL;
+	}
+		
+	if ((ret = SSL_accept(cli_ctx)) <= 0)
+	{
+		web_log(WEB_LOG_ERROR, "creat client ssl context failed (SSL_accept: %d, %s, ret=%d)\n",
+						ERR_get_error(), ERR_error_string(ERR_get_error(), NULL), ret);
+		web_log(WEB_LOG_ERROR, "ssl_accpet error (cause: %s)\n", strerror(errno));
+		SSL_free(cli_ctx);
+		return NULL;
+	}
+	return cli_ctx;
+}
+
+
 /* alloc a new connection memory resource */
 web_connection_t *
 alloc_new_connection(int fd, struct sockaddr_in *cliaddr, socklen_t clilen)
@@ -113,18 +163,56 @@ alloc_new_connection(int fd, struct sockaddr_in *cliaddr, socklen_t clilen)
 		web_log(WEB_LOG_ERROR, "alloc connection wbuf failed\n");
 		goto alloc_wbuf_err;
 	}
-
 	return conn;
 
 alloc_wbuf_err:
 	free(conn->rbuf);
 	conn->rbuf = NULL;
- 
 alloc_rbuf_err:
 	free(conn);
 	conn = NULL;
 alloc_conn_err:	
 	return conn;
+}
+
+
+
+web_connection_t *
+alloc_https_connection(SSL_CTX *ssl_ctx, int fd, struct sockaddr_in *cliaddr, socklen_t clilen)
+{
+	web_connection_t *conn;
+
+	if ((conn = alloc_new_connection(fd, cliaddr, clilen)) == NULL)
+	{
+		close(fd);
+		return NULL;
+	}
+
+	SET_CONN_SSL(conn); /* set ssl flag */
+	conn->ssl = get_ssl_ctx(ssl_ctx, fd);
+	if (conn->ssl == NULL)
+	{
+		close (fd);
+		return NULL;
+	}
+	
+	set_nonblock(fd);	
+	return conn;
+}
+
+
+web_connection_t *
+alloc_http_connection(int fd, struct sockaddr_in *cliaddr, socklen_t clilen)
+{
+	web_connection_t *conn;
+
+	set_nonblock(fd);
+	if ((conn = alloc_new_connection(fd, cliaddr, clilen)) == NULL)
+	{
+		close(fd);
+		return NULL;
+	}
+	return conn;	
 }
 
 
@@ -139,11 +227,23 @@ print_all_connections(web_conn_pool_t *pool)
 	conn = pool->conn_list_head;
 	while (conn != NULL) 
 	{
-		printf("%d:\tfd=%d\tsrcport=%d\n", i, conn->connfd, ntohs(conn->cliaddr.sin_port));
+		printf("%d:\tfd=%d\tsrcport=%d", i, conn->connfd, ntohs(conn->cliaddr.sin_port));
+		printf("\t%s\n", IS_CONN_SSL(conn) ? "HTTPS" : "HTTP");
 		i++;
 		conn = conn->next;
 	}
 	printf("\n|------------------------end---------------------------|\n\n");
+}
+
+
+void
+init_conn_pool(web_conn_pool_t *pool)
+{
+	if (pool == NULL)
+		return;
+
+	pool->size = 0;
+	pool->conn_list_head = NULL;
 }
 
 
@@ -159,16 +259,9 @@ add_conn_to_pool(web_conn_pool_t *pool, web_connection_t *conn)
 	//print_all_connections(pool);
 }
 
-
-/* remove a connection from pool */
 void
-remove_conn_from_pool(web_conn_pool_t *pool, web_connection_t *conn)
+free_connection(web_connection_t *conn)
 {
-	if (conn == NULL || pool == NULL)
-		return;
-
-	slist_remove((slist_node_t **)&pool->conn_list_head, (slist_node_t *)conn);
-	close(conn->connfd);
 	if (conn->rbuf != NULL)
 	{
 		free(conn->rbuf);
@@ -185,9 +278,27 @@ remove_conn_from_pool(web_conn_pool_t *pool, web_connection_t *conn)
 			free(conn->finfo->fbuf);
 		free(conn->finfo);
 	}
+
+	if (IS_CONN_SSL(conn))
+	{
+		SSL_shutdown(conn->ssl);
+		SSL_free(conn->ssl);
+	}
+	close(conn->connfd);
+	free(conn);
+}
+
+/* remove a connection from pool */
+void
+remove_conn_from_pool(web_conn_pool_t *pool, web_connection_t *conn)
+{
+	if (conn == NULL || pool == NULL)
+		return;
+
+	slist_remove((slist_node_t **)&pool->conn_list_head, (slist_node_t *)conn);
+	free_connection(conn);
 	pool->size--;
-	if (conn != NULL)
-		free(conn);
+	printf("pool size=%d\n", pool->size);
 	//print_all_connections(pool);
 }
 
