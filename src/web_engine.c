@@ -79,6 +79,17 @@ handle_connect_events(web_engine_t *engine, web_conn_type_t type)
 }
 
 
+ssize_t 
+ssl_read(SSL *ssl, void *buf, size_t size)
+{
+	int n;
+	int nreadn = 0;
+
+	while ((n = SSL_read(ssl, buf+nreadn, size-nreadn)) > 0)
+		nreadn += n;
+	return nreadn;
+}
+
 /* handle read events for active connection */
 void
 handle_read_events(web_engine_t *engine, web_connection_t *conn)
@@ -93,8 +104,28 @@ handle_read_events(web_engine_t *engine, web_connection_t *conn)
 	}
 	else 
 	{
+#if 0
+		int ret;
+		if (!IS_CONN_SSL_ACCEPTED(conn))
+		{
+			if ((ret = SSL_accept(conn->ssl)) <= 0)
+			{
+				web_log(WEB_LOG_ERROR, "creat client ssl context failed (SSL_accept: %d, %s, ret=%d)\n",
+						ERR_get_error(), ERR_error_string(ERR_get_error(), NULL), ret);
+				web_log(WEB_LOG_ERROR, "ssl_accpet error (cause: %s)\n", strerror(errno));
+				//SSL_free(conn->ssl);
+				//conn->ssl = NULL;
+				return;
+			}
+			SET_CONN_SSL_ACCEPTED(conn);
+			return;
+		}
+#endif
 		printf("https read .......\n");
+
+		/* todo: hack here */
 		nread = SSL_read(conn->ssl, conn->rbuf, READ_BUF_SIZE); 
+		nread = SSL_read(conn->ssl, conn->rbuf+nread, READ_BUF_SIZE-nread);
 	}
 	if (nread <= 0)
 	{

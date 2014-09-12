@@ -122,7 +122,6 @@ get_ssl_ctx(SSL_CTX *ssl_ctx, int fd)
 		SSL_free(cli_ctx);
 		return NULL;
 	}
-		
 	if ((ret = SSL_accept(cli_ctx)) <= 0)
 	{
 		web_log(WEB_LOG_ERROR, "creat client ssl context failed (SSL_accept: %d, %s, ret=%d)\n",
@@ -196,7 +195,7 @@ alloc_https_connection(SSL_CTX *ssl_ctx, int fd, struct sockaddr_in *cliaddr, so
 		return NULL;
 	}
 	
-	set_nonblock(fd);	
+	//set_nonblock(fd);	
 	return conn;
 }
 

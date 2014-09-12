@@ -19,6 +19,7 @@ OBJECTS += connection.o
 OBJECTS += http.o
 OBJECTS += log.o
 OBJECTS += slist.o
+OBJECTS += hash.o
 OBJECTS += util.o
 OBJECTS += ssl.o
 

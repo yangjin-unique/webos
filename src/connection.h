@@ -18,18 +18,25 @@
 
 #include <netinet/in.h>
 #include "ssl.h"
+#include "common.h"
 
 /* connection flag bit use */
 #define CONN_FLAG_CLOSE			0x0001 /* connection to be closed */
 #define	CONN_FLAG_WRITE			0x0002 /* conn has data to write */
 #define CONN_FLAG_SSL			0x0004 /* connection use ssl */
+#define CONN_FLAG_SSL_ACCEPTED	0x0008 /* conn has called ssl_accpet() */
+#define CONN_FLAG_CGI			0x0010 /* cgi actions flag */
 
-#define SET_CONN_CLOSE(conn)	(((conn)->flag) |= CONN_FLAG_CLOSE)
-#define IS_CONN_CLOSE(conn)		!!(((conn)->flag) & CONN_FLAG_CLOSE)
-#define SET_CONN_WRITE(conn)	(((conn)->flag) |= CONN_FLAG_WRITE)
-#define IS_CONN_WRITE(conn)		!!(((conn)->flag) & CONN_FLAG_WRITE)
-#define SET_CONN_SSL(conn)		(((conn)->flag) |= CONN_FLAG_SSL)
-#define IS_CONN_SSL(conn)		!!(((conn)->flag) & CONN_FLAG_SSL)
+#define SET_CONN_CLOSE(conn)			(((conn)->flag) |= CONN_FLAG_CLOSE) /* need to close conn fd */
+#define IS_CONN_CLOSE(conn)				!!(((conn)->flag) & CONN_FLAG_CLOSE) 
+#define SET_CONN_WRITE(conn)			(((conn)->flag) |= CONN_FLAG_WRITE) /* fd has data to write */
+#define IS_CONN_WRITE(conn)				!!(((conn)->flag) & CONN_FLAG_WRITE)
+#define SET_CONN_SSL(conn)				(((conn)->flag) |= CONN_FLAG_SSL) /* https connection */
+#define IS_CONN_SSL(conn)				!!(((conn)->flag) & CONN_FLAG_SSL)
+#define SET_CONN_SSL_ACCEPTED(conn)		(((conn)->flag) |= CONN_FLAG_SSL_ACCEPTED) 
+#define IS_CONN_SSL_ACCEPTED(conn)		!!(((conn)->flag) & CONN_FLAG_SSL_ACCEPTED) /* conn has called ssl_accpet() */
+#define SET_CONN_CGI(conn)				(((conn)->flag) |= CONN_FLAG_CGI) 
+#define IS_CONN_CGI(conn)				!!(((conn)->flag) & CONN_FLAG_CGI)
 
 typedef struct file_info
 {
@@ -39,6 +46,15 @@ typedef struct file_info
 	int		type; /* file type: html, css, jpeg, png, gif, ... */
 	char	*fbuf;
 }file_info_t;
+
+
+typedef struct cgi_param
+{
+	/* todo */
+	//hash_tbl_t	*env; /* cgi environmental variables */
+	char		*path;
+}cgi_param_t;
+
 
 /* per connection structure */
 typedef struct web_connection
@@ -67,6 +83,7 @@ typedef struct web_connection
 	int						conn_type; /* connection type: keep-alive, close */
 	file_info_t				*finfo;
 	unsigned int			flag;
+	struct cgi_param		*cgi;
 }web_connection_t;
 
 /* connection pool, hold all active conntions */
