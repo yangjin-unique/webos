@@ -44,3 +44,16 @@ str_caseless_cmp(char *s1, char *s2)
     
     return 0;
 }
+
+char *
+str_to_lower(char *str)
+{
+	char *s;
+
+	for (s = str; *s != '\0'; s++)
+	{
+		if (*s >= 'A' && *s <= 'Z')
+			*s += 'a'-'A';
+	}
+	return str;
+}

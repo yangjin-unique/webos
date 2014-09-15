@@ -19,6 +19,7 @@
 #include <netinet/in.h>
 #include "ssl.h"
 #include "common.h"
+#include "cgi.h"
 
 /* connection flag bit use */
 #define CONN_FLAG_CLOSE			0x0001 /* connection to be closed */
@@ -46,14 +47,6 @@ typedef struct file_info
 	int		type; /* file type: html, css, jpeg, png, gif, ... */
 	char	*fbuf;
 }file_info_t;
-
-
-typedef struct cgi_param
-{
-	/* todo */
-	//hash_tbl_t	*env; /* cgi environmental variables */
-	char		*path;
-}cgi_param_t;
 
 
 /* per connection structure */

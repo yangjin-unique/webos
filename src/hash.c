@@ -14,6 +14,7 @@
  * =====================================================================================
  */
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include "hash.h"
 
@@ -35,7 +36,7 @@ hash_default(void *str)
 
 /* default hash key cmpare function */
 int
-hash_cmp_default(void *s1, void *s2, size_t n)
+hash_cmp_default(void *s1, void *s2)
 {
 	return strcmp(s1, s2);
 }
@@ -55,7 +56,7 @@ hash_tbl_init(uint32 size, hash_func_t hash, hash_cmp_func_t hash_cmp)
 	htbl->size = (size == 0) ? HASH_TBL_DEFAULT_SIZE : size;
 	htbl->hash = (hash == NULL) ? (hash_func_t)hash_default : hash;
 	htbl->hash_cmp = (hash_cmp == NULL) ? (hash_cmp_func_t)hash_cmp_default : hash_cmp;
-	htbl->bucket = (hash_node_t **)malloc(htbl->size * sizeof(*hash_node_t));
+	htbl->bucket = (hash_node_t **)malloc(htbl->size * sizeof(hash_node_t *));
 	if (htbl->bucket == NULL)
 	{
 		free(htbl);
@@ -82,6 +83,8 @@ hash_node_alloc(char *key, char *value)
 		free(node);
 		return NULL;
 	}
+	memset(node->key, 0, strlen(key)+1);
+	strcpy(node->key, key);
 	node->value = malloc(strlen(value)+1);
 	if (node->value == NULL)
 	{
@@ -89,6 +92,8 @@ hash_node_alloc(char *key, char *value)
 		free(node);
 		return NULL;
 	}
+	memset(node->value, 0, strlen(value)+1);
+	strcpy(node->value, value);
 	return node;
 }
 
@@ -140,7 +145,7 @@ hash_tbl_add(hash_tbl_t *htbl, char *key, char *value, int force_update)
 	ulong index;
 	size_t len;
 
-	if (htbl == NULL || key == NULL || value == NULL)
+	if (htbl == NULL || key == NULL) /* value can be null */
 		return;
 	if ((node = hash_tbl_find(htbl, key)) != NULL)
 	{
@@ -155,18 +160,18 @@ hash_tbl_add(hash_tbl_t *htbl, char *key, char *value, int force_update)
 				memset(node->value, 0, len+1);
 				strncpy(node->value, value, len+1);
 			}
+			else
+				strcpy(node->value, value);
 		}
 		return; /* already existed */
 	}
 	
 	/* add a new node */
-	node = hash_node_alloc();
-	strcpy(node->key, key);
-	strcpy(node->value, value);
+	node = hash_node_alloc(key, value);
 
 	index = htbl->hash(key) % htbl->size;
 	head = htbl->bucket[index];
-	if (curr == NULL)
+	if (head == NULL)
 	{
 		htbl->bucket[index] = node;
 		node->prev = node;
@@ -180,6 +185,7 @@ hash_tbl_add(hash_tbl_t *htbl, char *key, char *value, int force_update)
 		head->prev = node;
 		htbl->bucket[index] = node;
 	}
+	htbl->num_node++;
 }
 
 
@@ -192,6 +198,7 @@ hash_tbl_del(hash_tbl_t *htbl, hash_node_t *node)
 	node->prev->next = node->next;
 	node->next->prev = node->prev;
 	hash_node_free(node);
+	htbl->num_node--;
 }
 
 
@@ -204,19 +211,18 @@ hash_tbl_del_by_key(hash_tbl_t *htbl, char *key)
 	if (node == NULL)
 		return;
 	hash_tbl_del(htbl, node);
+	htbl->num_node--;
 }
 
 
-#define DEBUG
-#ifdef DEBUG
 void
 print_hash_tbl(hash_tbl_t *htbl)
 {
 	hash_node_t *node;
 	int i;
 
-	printf("\n|----------------------------------------------------|\n");
-	for (i=0; i < HASH_TBL_DEFAULT_SIZE; i++)
+	printf("\n|-----------------------hash tbl----------------------------|\n");
+	for (i=0; i < htbl->size; i++)
 	{
 		printf("%d: ", i);
 		node = htbl->bucket[i];
@@ -225,36 +231,47 @@ print_hash_tbl(hash_tbl_t *htbl)
 			printf("NULL\n");
 			continue;
 		}
-		printf("[%s %d %s]\t", node->key, htbl->hash(node->key), node->value);
+		printf("[%s %ld %s]\t", node->key, htbl->hash(node->key), node->value);
 		node = node->next;
 		while (node != htbl->bucket[i])
 		{
-			printf("[%s %d %s]\t", node->key, htbl->hash(node->key), node->value);
+			printf("[%s %ld %s]\t", node->key, htbl->hash(node->key), node->value);
 			node = node->next;
 		}
 		putchar('\n');
 	}
+	printf("|-----------------------end of hash tbl-------------------------|\n\n");
 }
 
 
+#ifdef DEBUG
 int
 main()
 {
 	char key[32];
 	char value[32];
-	hash_node_t *node;
+	//hash_node_t *node;
 	hash_tbl_t *htbl;
 
 	memset(key, 0, sizeof(key));
 	memset(value, 0, sizeof(value));
 
-	htlb = hash_tbl_init(17, NULL, NULL);
+	htbl = hash_tbl_init(17, NULL, NULL);
 	hash_tbl_add(htbl, "xing", "yang", 1);
 	hash_tbl_add(htbl, "ming", "jin", 1);
 
 	hash_tbl_add(htbl, "email", "yangjin@gmai.com", 1);
 	hash_tbl_add(htbl, "age", "25", 1);
+	hash_tbl_add(htbl, "age", "30", 1);
+
+	hash_tbl_add(htbl, "gender", "man", 1);
 	
+	hash_tbl_add(htbl, "address", "King Road", 1);
+
+	hash_tbl_add(htbl, "phone", "021-99999999", 1);
+
+	hash_tbl_add(htbl, "number", "1111", 1);
 	print_hash_tbl(htbl);
+	return 0;
 }
 #endif

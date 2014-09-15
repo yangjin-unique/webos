@@ -18,8 +18,8 @@
 #include "common.h"
 
 
-typedef ulong (*hash_func_t)(const void *);
-typedef int (*hash_cmp_func_t)(const void *, const void *, size_t size);
+typedef long (*hash_func_t)(void *);
+typedef int (*hash_cmp_func_t)(void *, void *);
 
 typedef struct hash_node
 {
@@ -39,4 +39,11 @@ typedef struct hash_tbl
 }hash_tbl_t;
 
 
+/* public api */
+hash_tbl_t *hash_tbl_init(uint32 size, hash_func_t hash, hash_cmp_func_t hash_cmp);
+hash_node_t *hash_tbl_find(hash_tbl_t *htbl, char *key);
+void hash_tbl_add(hash_tbl_t *htbl, char *key, char *value, int force_update);
+void hash_tbl_del_by_key(hash_tbl_t *htbl, char *key);
+void hash_tbl_del(hash_tbl_t *htbl, hash_node_t *node);
+void print_hash_tbl(hash_tbl_t *htbl);
 #endif

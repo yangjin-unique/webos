@@ -163,6 +163,7 @@ get_content_type(http_content_type_t type)
 }
 
 
+
 size_t
 read_nbytes(int fd, char *buf, size_t size)
 {
@@ -372,6 +373,7 @@ void
 http_response(web_connection_t *conn, http_resp_status_code_t code)
 {
 	/* todo */
+	if (IS_CONN_CGI(conn))
 	SET_CONN_WRITE(conn); /* set write flag */
 	build_resp_status_line(conn, code);
 	if (conn->status != HTTP_PARSE_ERROR)
@@ -440,7 +442,15 @@ parse_request_line(web_connection_t *conn)
 		goto err;
 	}
 	conn->uri = uri;
-	if (prepare_file(conn, conn->uri, &code) == -1) /* check uri */
+	if (is_cgi_req(uri))
+	{
+		web_log(WEB_LOG_DEBUG, "cgi request\n");
+		SET_CONN_CGI(conn);
+		cgi_init_params(&conn->cgi, uri);
+		cgi_add_env_pair(conn->cgi, "uri", uri);
+		cgi_add_env_pair(conn->cgi, "http_method", method);
+	}
+	else if (prepare_file(conn, conn->uri, &code) == -1) /* check uri */
 		goto err;
 
 	/******** parse http version *******/
@@ -501,7 +511,11 @@ parse_header(web_connection_t *conn)
 		end++;
 		while (*end == ' ' || *end == '\t') end++;
 		value = end;
+		str_to_lower(key);
 		web_log(WEB_LOG_EVENT, "%s=%s\n", key, value);
+		
+		if (IS_CONN_CGI(conn))
+			cgi_add_env_pair(conn->cgi, key, value);	
 
 		if (str_caseless_cmp(key, "user-agent") == 0)
 		{
@@ -528,6 +542,9 @@ parse_header(web_connection_t *conn)
 		}
 	}
 	
+	if (IS_CONN_CGI(conn))
+		cgi_print_all_env(conn->cgi);
+	 
 	if (conn->method == HTTP_METHOD_POST)
 	{
 		/* content length field */

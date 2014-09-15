@@ -20,6 +20,6 @@ typedef unsigned char uchar;
 
 
 int str_caseless_cmp(char *s1, char *s2);
-
+char *str_to_lower(char *str);
 
 #endif
