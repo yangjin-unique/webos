@@ -26,6 +26,7 @@
 #include <fcntl.h>
 
 extern char g_www_root_folder[MAX_PATH_NAME];
+extern char g_cgi_folder[MAX_PATH_NAME];
 
 char *
 get_token(web_connection_t *conn, char *delim)
@@ -369,15 +370,98 @@ http_send_resp(web_connection_t *conn)
 }
 #endif
 
+
+int 
+build_cgi_resp(web_connection_t *conn)
+{
+	char *argv[] = {g_cgi_folder, NULL};
+	char **env = NULL;
+	pid_t pid;
+	int stdin_pipe[2];
+	int stdout_pipe[2];
+	
+	env = cgi_setup_env_array(conn->cgi);
+	if (env == NULL)
+		return -1;
+	if (pipe(stdin_pipe) < 0)
+	{
+		web_log(WEB_LOG_ERROR, "cgi pipe failed\n");
+		return -1;
+	}
+	if (pipe(stdout_pipe) < 0)
+	{
+		web_log(WEB_LOG_ERROR, "cgi pipe failed\n");
+		return -1;
+	}
+
+	pid = fork();
+	if (pid < 0)
+	{
+		web_log(WEB_LOG_EVENT, "cgi fork failed\n");
+		return -1;
+	}
+	if (pid == 0) /* child cgi process */
+	{
+		close(stdin_pipe[1]);
+		close(stdout_pipe[0]);
+		web_log(WEB_LOG_EVENT, "--------cgi child process running...-------\n");
+		if (stdin_pipe[0] != fileno(stdin)) 
+		{
+			if (dup2(stdin_pipe[0], fileno(stdin)) != fileno(stdin))
+				web_log(WEB_LOG_ERROR, "cgi stdin dup2 failed\n");
+			close(stdin_pipe[0]);
+		}
+		if (stdout_pipe[1] != fileno(stdout))
+		{
+			if (dup2(stdout_pipe[1], fileno(stdout)) != fileno(stdout))
+				web_log(WEB_LOG_ERROR, "cgi stdout dup2 failed\n");
+			close(stdout_pipe[1]);
+		}
+		if (execve(g_cgi_folder, argv, env))
+		{
+			web_log(WEB_LOG_ERROR, "cgi execve failed\n");
+			return -1;
+		}
+	}
+	else
+	{	/* parent process */
+		close(stdin_pipe[0]);
+		close(stdout_pipe[1]);
+		if (conn->cont_len > 0)
+		{
+			if (write(stdin_pipe[1], conn->content, conn->cont_len) != conn->cont_len)
+			{
+				web_log(WEB_LOG_EVENT, "cgi write not enough bytes\n");
+				close(stdin_pipe[1]);
+				return -1;
+			}
+		}
+		close(stdin_pipe[1]);
+		getchar();
+		conn->cgi->chld_pid = pid;
+		conn->cgi->cgi_outfd = stdout_pipe[0];
+		//cgi_free_env_array(env);
+		return 0;
+	}
+	return 0;
+}
+
+
 void
 http_response(web_connection_t *conn, http_resp_status_code_t code)
 {
 	/* todo */
-	if (IS_CONN_CGI(conn))
-	SET_CONN_WRITE(conn); /* set write flag */
-	build_resp_status_line(conn, code);
-	if (conn->status != HTTP_PARSE_ERROR)
-		build_resp_header(conn);
+	if (conn->status != HTTP_PARSE_ERROR && IS_CONN_CGI(conn))
+	{
+		build_cgi_resp(conn);
+	}
+	else
+	{
+		SET_CONN_WRITE(conn); /* set write flag */
+		build_resp_status_line(conn, code);
+		if (conn->status != HTTP_PARSE_ERROR)
+			build_resp_header(conn);
+	}
 }
 
 
@@ -446,7 +530,12 @@ parse_request_line(web_connection_t *conn)
 	{
 		web_log(WEB_LOG_DEBUG, "cgi request\n");
 		SET_CONN_CGI(conn);
-		cgi_init_params(&conn->cgi, uri);
+		if (cgi_init_params(&conn->cgi, uri) == -1)
+		{
+			web_log(WEB_LOG_ERROR, "cgi env initialize failed\n");
+			code = HTTP_CODE_INTERNAL_SERVER_ERROR;
+			goto err;
+		}
 		cgi_add_env_pair(conn->cgi, "uri", uri);
 		cgi_add_env_pair(conn->cgi, "http_method", method);
 	}
@@ -569,7 +658,10 @@ err:
 void
 parse_content(web_connection_t *conn)
 {
-	/* Todo */
+	/* Todo: please test it...... */
+	printf("---------Post data(len=%d, cont-len=%d): %s\n",
+			strlen(conn->prbuf), conn->cont_len, conn->prbuf);
+	conn->content = conn->prbuf;
 	conn->status = HTTP_PARSE_END;
 }
 

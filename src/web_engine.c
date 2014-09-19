@@ -249,6 +249,11 @@ process_events(web_engine_t *engine, int nready, fd_set *readfds, fd_set *writef
 			handle_read_events(engine, proc_conn);
 			nready--;
 		}
+		if (IS_CONN_CGI(conn) && FD_ISSET(proc_conn->cgi->cgi_outfd, readfds))
+		{
+			handle_cgi_read_events();
+			nready--;
+		}
 		if (FD_ISSET(proc_conn->connfd, writefds))			
 		{	/* todo */
 			handle_write_events(engine, proc_conn);
@@ -284,6 +289,15 @@ select_engine(web_engine_t *engine, fd_set *readfds, fd_set *writefds)
 		if (IS_CONN_WRITE(conn))
 			FD_SET(conn->connfd, writefds);
 
+		if (IS_CONN_CGI(conn))
+		{
+			if (conn->cgi->cgi_outfd >= 0)
+			{
+				FD_SET(conn->cgi->cgi_outfd, readfds);
+				if (conn->cgi->cgi_outfd > g_max_sock_fd)
+					g_max_sock_fd = conn->connfd;
+			}
+		}
 		if(conn->connfd > g_max_sock_fd)
 			g_max_sock_fd = conn->connfd;
 

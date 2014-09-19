@@ -23,11 +23,12 @@
 #include "string.h"
 #define USAGE	"\nUsage: %s <http_port> <https_port> <www folder> <log_file> <private_key_file> <cert_file>\n"
 
-/* @ubuntu:sudo ./webos 80 443 www log CA/private/server.key CA/certs/server.crt
+/* @ubuntu:sudo ./webos 80 443 www log CA/private/server.key CA/certs/server.crt cgi_folder
  *
  */
 
 char g_www_root_folder[MAX_PATH_NAME];
+char g_cgi_folder[MAX_PATH_NAME];
 
 int
 main(int argc, char **argv)
@@ -37,7 +38,7 @@ main(int argc, char **argv)
 
 	web_engine_t engine;
 	
-	if (argc < 7)
+	if (argc < 8)
 	{
 		fprintf(stdout, USAGE, argv[0]);
 		return -1;
@@ -51,6 +52,7 @@ main(int argc, char **argv)
 	//lock_file = argv[3];
 	engine.key = argv[5];
 	engine.cert = argv[6];
+	strcpy(g_cgi_folder, argv[7]);
 	log_init(log_file);
 	web_engine_creat(&engine);
 	

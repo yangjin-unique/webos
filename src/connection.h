@@ -71,6 +71,7 @@ typedef struct web_connection
 	char					*proto; /* HTTP protocol version (HTTP/1.1) */
 	char					*uri;
 	char					*user_agent;
+	char					*content;
 	int						cont_type; /* content type */
 	int						cont_len; /* content length */
 	int						conn_type; /* connection type: keep-alive, close */

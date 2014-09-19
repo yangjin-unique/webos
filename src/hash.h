@@ -46,4 +46,5 @@ void hash_tbl_add(hash_tbl_t *htbl, char *key, char *value, int force_update);
 void hash_tbl_del_by_key(hash_tbl_t *htbl, char *key);
 void hash_tbl_del(hash_tbl_t *htbl, hash_node_t *node);
 void print_hash_tbl(hash_tbl_t *htbl);
+void hash_tbl_free_tbl(hash_tbl_t *htbl);
 #endif

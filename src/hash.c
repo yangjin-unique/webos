@@ -56,7 +56,7 @@ hash_tbl_init(uint32 size, hash_func_t hash, hash_cmp_func_t hash_cmp)
 	htbl->size = (size == 0) ? HASH_TBL_DEFAULT_SIZE : size;
 	htbl->hash = (hash == NULL) ? (hash_func_t)hash_default : hash;
 	htbl->hash_cmp = (hash_cmp == NULL) ? (hash_cmp_func_t)hash_cmp_default : hash_cmp;
-	htbl->bucket = (hash_node_t **)malloc(htbl->size * sizeof(hash_node_t *));
+	htbl->bucket = (hash_node_t **)calloc(htbl->size, sizeof(hash_node_t *));
 	if (htbl->bucket == NULL)
 	{
 		free(htbl);
@@ -214,6 +214,28 @@ hash_tbl_del_by_key(hash_tbl_t *htbl, char *key)
 	htbl->num_node--;
 }
 
+
+void
+hash_tbl_free_tbl(hash_tbl_t *htbl)
+{
+	int i;
+	hash_node_t *node, *prev;
+
+	if (htbl == NULL)
+		return;
+	for (i = 0; i < htbl->size; i++)
+	{
+		node = htbl->bucket[i];
+		while (node != NULL)
+		{
+			prev = node;
+			node = node->next;
+			free(prev);
+			prev = NULL;
+		}
+	}
+	free(htbl);
+}
 
 void
 print_hash_tbl(hash_tbl_t *htbl)

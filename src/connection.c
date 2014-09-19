@@ -175,7 +175,6 @@ alloc_conn_err:
 }
 
 
-
 web_connection_t *
 alloc_https_connection(SSL_CTX *ssl_ctx, int fd, struct sockaddr_in *cliaddr, socklen_t clilen)
 {
@@ -258,6 +257,7 @@ add_conn_to_pool(web_conn_pool_t *pool, web_connection_t *conn)
 	//print_all_connections(pool);
 }
 
+
 void
 free_connection(web_connection_t *conn)
 {
@@ -276,16 +276,27 @@ free_connection(web_connection_t *conn)
 		if (conn->finfo->fbuf != NULL)
 			free(conn->finfo->fbuf);
 		free(conn->finfo);
+		conn->finfo = NULL;
 	}
 
 	if (IS_CONN_SSL(conn))
 	{
 		SSL_shutdown(conn->ssl);
 		SSL_free(conn->ssl);
+		conn->ssl = NULL;
+	}
+
+	if (conn->cgi != NULL)
+	{
+		if (conn->cgi->env != NULL)
+			cgi_free_env_table(conn->cgi->env);
+		free(conn->cgi);
+		conn->cgi = NULL;
 	}
 	close(conn->connfd);
 	free(conn);
 }
+
 
 /* remove a connection from pool */
 void
