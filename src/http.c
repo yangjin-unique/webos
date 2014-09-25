@@ -409,17 +409,18 @@ build_cgi_resp(web_connection_t *conn)
 		{
 			if (dup2(stdin_pipe[0], fileno(stdin)) != fileno(stdin))
 				web_log(WEB_LOG_ERROR, "cgi stdin dup2 failed\n");
-			close(stdin_pipe[0]);
+			//close(stdin_pipe[0]);
 		}
 		if (stdout_pipe[1] != fileno(stdout))
 		{
 			if (dup2(stdout_pipe[1], fileno(stdout)) != fileno(stdout))
 				web_log(WEB_LOG_ERROR, "cgi stdout dup2 failed\n");
-			close(stdout_pipe[1]);
+			//close(stdout_pipe[1]);
 		}
 		if (execve(g_cgi_folder, argv, env))
 		{
-			web_log(WEB_LOG_ERROR, "cgi execve failed\n");
+			fprintf(stderr, "cgi execve failed ..........%s\n", strerror(errno));
+			web_log(WEB_LOG_ERROR, "cgi execve failed: %s\n", strerror(errno));
 			return -1;
 		}
 	}
@@ -437,10 +438,10 @@ build_cgi_resp(web_connection_t *conn)
 			}
 		}
 		close(stdin_pipe[1]);
-		getchar();
 		conn->cgi->chld_pid = pid;
 		conn->cgi->cgi_outfd = stdout_pipe[0];
-		//cgi_free_env_array(env);
+		web_log(WEB_LOG_DEBUG ,"conn->cgi->outfd = %d ........\n", conn->cgi->cgi_outfd);
+		cgi_free_env_array(env);
 		return 0;
 	}
 	return 0;

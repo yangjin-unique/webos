@@ -90,6 +90,25 @@ ssl_read(SSL *ssl, void *buf, size_t size)
 	return nreadn;
 }
 
+
+void
+handle_cgi_read_events(web_connection_t *conn)
+{
+	int nread;
+
+	nread = read(conn->cgi->cgi_outfd, conn->rbuf, READ_BUF_SIZE);
+	if (nread <= 0)
+	{
+		SET_CONN_CLOSE(conn);
+		web_log(WEB_LOG_DEBUG, "cgi read failed: %d bytes\n", nread);
+		return;
+	}
+	conn->rbuf[nread] = 0;
+	web_log(WEB_LOG_DEBUG, "cgi read %d bytes: %s\n", nread, conn->rbuf);
+	SET_CONN_WRITE(conn);
+	SET_CONN_CLOSE(conn);
+}
+
 /* handle read events for active connection */
 void
 handle_read_events(web_engine_t *engine, web_connection_t *conn)
@@ -249,9 +268,12 @@ process_events(web_engine_t *engine, int nready, fd_set *readfds, fd_set *writef
 			handle_read_events(engine, proc_conn);
 			nready--;
 		}
-		if (IS_CONN_CGI(conn) && FD_ISSET(proc_conn->cgi->cgi_outfd, readfds))
+		if (IS_CONN_CGI(proc_conn) && proc_conn->cgi != NULL 
+					&& proc_conn->cgi->cgi_outfd >= 0
+					&& FD_ISSET(proc_conn->cgi->cgi_outfd, readfds))
 		{
-			handle_cgi_read_events();
+			web_log(WEB_LOG_DEBUG, "cgi fd is ready now .................\n");
+			handle_cgi_read_events(conn);
 			nready--;
 		}
 		if (FD_ISSET(proc_conn->connfd, writefds))			
@@ -293,6 +315,7 @@ select_engine(web_engine_t *engine, fd_set *readfds, fd_set *writefds)
 		{
 			if (conn->cgi->cgi_outfd >= 0)
 			{
+				web_log(WEB_LOG_DEBUG, "add cgi out fd to select engine .....\n");
 				FD_SET(conn->cgi->cgi_outfd, readfds);
 				if (conn->cgi->cgi_outfd > g_max_sock_fd)
 					g_max_sock_fd = conn->connfd;
@@ -332,7 +355,7 @@ web_engine_event_loop(web_engine_t *engine)
 		/* add read events */
 		if ((nready = select_engine(engine, &readfds, &writefds)) > 0)
 		{
-			//printf("%d sockets ready ......\n", nready);
+			printf("%d sockets ready ......\n", nready);
 			process_events(engine, nready, &readfds, &writefds);
 		}
 	}

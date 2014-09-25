@@ -131,35 +131,33 @@ char **
 cgi_setup_env_array(cgi_param_t *cgi)
 {
 	char **env;
+	char **p;
 	env = (char **)malloc(CGI_NUM_ENV_PAIR * sizeof(char *));
 	if (env == NULL)
 		return env;
+	p = env;
+	add_one_pair_env(p++, "QUERY_STRING", cgi->query_string);
+	add_one_pair_env(p++, "PATH_INFO", cgi->path);
+	add_one_pair_env(p++, "REQUEST_URI", cgi_get_value(cgi, "uri"));
+	add_one_pair_env(p++, "GATEWAY_INTERFACE", "CGI/1.1");
+	add_one_pair_env(p++, "SERVER_PROTOCOL", "HTTP/1.1");
+	add_one_pair_env(p++, "SERVER_SOFTWARE", "Webos/1.0");
+	add_one_pair_env(p++, "SCRIPT_NAME", "/cgi");
+	add_one_pair_env(p++, "REQUEST_METHOD", cgi_get_value(cgi, "http_method"));
+	add_one_pair_env(p++, "CONTENT_LENGTH", cgi_get_value(cgi, "content-length"));
+	add_one_pair_env(p++, "CONTENT_TYPE", cgi_get_value(cgi, "content-type"));
+	add_one_pair_env(p++, "HTTP_ACCEPT", cgi_get_value(cgi, "accept"));
+	add_one_pair_env(p++, "HTTP_REFERER", cgi_get_value(cgi, "referer"));
+	add_one_pair_env(p++, "HTTP_ACCEPT_ENCODING", cgi_get_value(cgi, "accept-encoding"));
+	add_one_pair_env(p++, "HTTP_ACCEPT_LANGUAGE", cgi_get_value(cgi, "accept-language"));
+	add_one_pair_env(p++, "HTTP_ACCEPT_CHARSET", cgi_get_value(cgi, "accept-charset"));
+	add_one_pair_env(p++, "HTTP_HOST", cgi_get_value(cgi, "host"));
+	add_one_pair_env(p++, "HTTP_COOKIE", cgi_get_value(cgi, "cookie"));
+	add_one_pair_env(p++, "HTTP_USER_AGENT", cgi_get_value(cgi, "user-agent"));
+	add_one_pair_env(p++, "HTTP_CONNECTION", cgi_get_value(cgi, "connection"));
+	*p = NULL; /* null terminated */
 #ifdef DEBUG
-	char **tmp = env;
-#endif
-	add_one_pair_env(env++, "QUERY_STRING", cgi->query_string);
-	add_one_pair_env(env++, "PATH_INFO", cgi->path);
-
-	add_one_pair_env(env++, "REQUEST_URI", cgi_get_value(cgi, "uri"));
-	add_one_pair_env(env++, "GATEWAY_INTERFACE", "CGI/1.1");
-	add_one_pair_env(env++, "SERVER_PROTOCOL", "HTTP/1.1");
-	add_one_pair_env(env++, "SERVER_SOFTWARE", "Webos/1.0");
-	add_one_pair_env(env++, "SCRIPT_NAME", "/cgi");
-	add_one_pair_env(env++, "REQUEST_METHOD", cgi_get_value(cgi, "http_method"));
-	add_one_pair_env(env++, "CONTENT_LENGTH", cgi_get_value(cgi, "content-length"));
-	add_one_pair_env(env++, "CONTENT_TYPE", cgi_get_value(cgi, "content-type"));
-	add_one_pair_env(env++, "HTTP_ACCEPT", cgi_get_value(cgi, "accept"));
-	add_one_pair_env(env++, "HTTP_REFERER", cgi_get_value(cgi, "referer"));
-	add_one_pair_env(env++, "HTTP_ACCEPT_ENCODING", cgi_get_value(cgi, "accept-encoding"));
-	add_one_pair_env(env++, "HTTP_ACCEPT_LANGUAGE", cgi_get_value(cgi, "accept-language"));
-	add_one_pair_env(env++, "HTTP_ACCEPT_CHARSET", cgi_get_value(cgi, "accept-charset"));
-	add_one_pair_env(env++, "HTTP_HOST", cgi_get_value(cgi, "host"));
-	add_one_pair_env(env++, "HTTP_COOKIE", cgi_get_value(cgi, "cookie"));
-	add_one_pair_env(env++, "HTTP_USER_AGENT", cgi_get_value(cgi, "user-agent"));
-	add_one_pair_env(env++, "HTTP_CONNECTION", cgi_get_value(cgi, "connection"));
-	*env = NULL; /* null terminated */
-#ifdef DEBUG
-	cgi_print_env_array(tmp);
+	cgi_print_env_array(env);
 #endif
 	return env;
 }
@@ -169,10 +167,11 @@ cgi_setup_env_array(cgi_param_t *cgi)
 void
 cgi_free_env_array(char **env)
 {
+	char **p;
 	if (env == NULL)
 		return;
-	for (; *env != NULL; env++)
-		free(*env);
+	for (p = env; *p != NULL; p++)
+		free(*p);
 	free(env);
 }
 
