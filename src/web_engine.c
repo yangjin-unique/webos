@@ -47,6 +47,23 @@ web_engine_creat(web_engine_t *engine)
 }
 
 
+ssize_t
+webos_write(web_connection_t *conn, const void *buf, size_t size)
+{
+	int nwrite = 0;
+
+	if (!IS_CONN_SSL(conn))
+		nwrite = write(conn->connfd, buf, size);
+	else
+	{
+		if (conn->ssl == NULL)
+			return nwrite;
+		nwrite = SSL_write(conn->ssl, buf, size);
+	}
+	return nwrite;
+}
+
+
 /* handle new connection coming events, includes http and https connections */
 void
 handle_connect_events(web_engine_t *engine, web_conn_type_t type)
@@ -105,7 +122,10 @@ handle_cgi_read_events(web_connection_t *conn)
 	}
 	conn->rbuf[nread] = 0;
 	web_log(WEB_LOG_DEBUG, "cgi read %d bytes: %s\n", nread, conn->rbuf);
-	SET_CONN_WRITE(conn);
+	if (webos_write(conn, conn->rbuf, nread) != nread)
+	{
+		web_log(WEB_LOG_DEBUG, "cgi write failed\n");
+	}
 	SET_CONN_CLOSE(conn);
 }
 
@@ -168,22 +188,6 @@ handle_read_events(web_engine_t *engine, web_connection_t *conn)
 }
 
 
-ssize_t
-web_write(web_connection_t *conn, const void *buf, size_t size)
-{
-	int nwrite = 0;
-
-	if (!IS_CONN_SSL(conn))
-		nwrite = write(conn->connfd, buf, size);
-	else
-	{
-		if (conn->ssl == NULL)
-			return nwrite;
-		nwrite = SSL_write(conn->ssl, buf, size);
-	}
-	return nwrite;
-}
-
 
 void
 send_response(web_connection_t *conn)
@@ -191,7 +195,7 @@ send_response(web_connection_t *conn)
 	int nbytes;
 
 	printf("..........send response now .........\n");
-	if ((nbytes =web_write(conn, conn->wbuf, conn->wsize)) != conn->wsize)
+	if ((nbytes =webos_write(conn, conn->wbuf, conn->wsize)) != conn->wsize)
 	{
 		web_log(WEB_LOG_ERROR, "send failed: only %d bytes sent\n", nbytes);
 		return;
@@ -202,7 +206,7 @@ send_response(web_connection_t *conn)
 	if (conn->finfo != NULL && conn->finfo->fbuf != NULL)
 	{
 		//printf("send file now...");
-		if ((nbytes = web_write(conn, conn->finfo->fbuf, 
+		if ((nbytes = webos_write(conn, conn->finfo->fbuf, 
 						conn->finfo->size) != conn->finfo->size))
 		{
 			web_log(WEB_LOG_ERROR, "send file failed\n");
@@ -273,7 +277,7 @@ process_events(web_engine_t *engine, int nready, fd_set *readfds, fd_set *writef
 					&& FD_ISSET(proc_conn->cgi->cgi_outfd, readfds))
 		{
 			web_log(WEB_LOG_DEBUG, "cgi fd is ready now .................\n");
-			handle_cgi_read_events(conn);
+			handle_cgi_read_events(proc_conn);
 			nready--;
 		}
 		if (FD_ISSET(proc_conn->connfd, writefds))			
@@ -315,10 +319,10 @@ select_engine(web_engine_t *engine, fd_set *readfds, fd_set *writefds)
 		{
 			if (conn->cgi->cgi_outfd >= 0)
 			{
-				web_log(WEB_LOG_DEBUG, "add cgi out fd to select engine .....\n");
+				web_log(WEB_LOG_DEBUG, "add cgi out fd to select engine (fd=%d).....\n", conn->cgi->cgi_outfd);
 				FD_SET(conn->cgi->cgi_outfd, readfds);
 				if (conn->cgi->cgi_outfd > g_max_sock_fd)
-					g_max_sock_fd = conn->connfd;
+					g_max_sock_fd = conn->cgi->cgi_outfd;
 			}
 		}
 		if(conn->connfd > g_max_sock_fd)
@@ -326,7 +330,7 @@ select_engine(web_engine_t *engine, fd_set *readfds, fd_set *writefds)
 
 		conn = get_next_conn_from_pool(conn);
 	}
-
+	web_log(WEB_LOG_DEBUG, "webos max fd in select engine is: %d\n", g_max_sock_fd);
 	nready = select(g_max_sock_fd + 1, readfds, writefds, NULL, NULL);
 
 	if (nready < 0)

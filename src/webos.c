@@ -24,7 +24,7 @@
 #define USAGE	"\nUsage: %s <http_port> <https_port> <www folder> <log_file> <private_key_file> <cert_file>\n"
 
 /* @ubuntu:sudo ./webos 80 443 www log CA/private/server.key CA/certs/server.crt cgi_folder
- *
+ *sudo ./webos 80 443 www log CA/private/server.key CA/certs/server.crt flask/cgi_script.py
  */
 
 char g_www_root_folder[MAX_PATH_NAME];
