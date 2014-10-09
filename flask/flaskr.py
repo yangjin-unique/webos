@@ -29,12 +29,18 @@ def connect_db():
 
 
 def init_db():
-    """Creates the database tables."""
+    """Initializes the database tables."""
     with closing(connect_db()) as db:
         with app.open_resource(app.config['SCHEMA']) as f:
             db.cursor().executescript(f.read())
         db.commit()
 
+"""
+@app.cli.command('initdb')
+def initdb_cmd():
+    init_db()
+    print "Initialized the database..."
+"""
 
 @app.before_request
 def before_request():

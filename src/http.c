@@ -415,6 +415,12 @@ build_cgi_resp(web_connection_t *conn)
 		{
 			if (dup2(stdout_pipe[1], fileno(stdout)) != fileno(stdout))
 				web_log(WEB_LOG_ERROR, "cgi stdout dup2 failed\n");
+		}
+		/* we also dup stderr for debug use */	
+		if (stdout_pipe[1] != fileno(stderr))
+		{
+			if (dup2(stdout_pipe[1], fileno(stderr)) != fileno(stderr))
+				web_log(WEB_LOG_ERROR, "cgi stdout dup2 failed\n");
 			close(stdout_pipe[1]);
 		}
 		if (execve(g_cgi_folder, argv, env))
@@ -437,18 +443,7 @@ build_cgi_resp(web_connection_t *conn)
 				return -1;
 			}
 		}
-		/*************************/
-#if 0
-		int ret;
-		char buf[1000];
-		while ((ret = read(stdout_pipe[0], buf, 1000-1)) > 0)
-		{
-			buf[999] = 0;
-			fprintf(stdout, "Got from cgi: %s\n", buf);
-			ret = write(conn->connfd, buf, 1000);
-		}
-#endif
-		/***************************/
+
 		close(stdin_pipe[1]);
 		conn->cgi->chld_pid = pid;
 		conn->cgi->cgi_outfd = stdout_pipe[0];

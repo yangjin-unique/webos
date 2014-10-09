@@ -225,8 +225,16 @@ hash_tbl_free_tbl(hash_tbl_t *htbl)
 		return;
 	for (i = 0; i < htbl->size; i++)
 	{
-		node = htbl->bucket[i];
-		while (node != NULL)
+		prev = node = htbl->bucket[i];
+		if (node == NULL)
+			continue;
+		else
+		{
+			node = node->next;
+			free(prev);
+		}
+
+		while (node != htbl->bucket[i])
 		{
 			prev = node;
 			node = node->next;

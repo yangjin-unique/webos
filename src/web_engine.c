@@ -164,7 +164,7 @@ handle_read_events(web_engine_t *engine, web_connection_t *conn)
 
 		/* todo: hack here */
 		nread = SSL_read(conn->ssl, conn->rbuf, READ_BUF_SIZE); 
-		nread = SSL_read(conn->ssl, conn->rbuf+nread, READ_BUF_SIZE-nread);
+		nread += SSL_read(conn->ssl, conn->rbuf+nread, READ_BUF_SIZE-nread);
 	}
 	if (nread <= 0)
 	{
@@ -241,7 +241,7 @@ process_events(web_engine_t *engine, int nready, fd_set *readfds, fd_set *writef
 	if (FD_ISSET(engine->http_listen_fd, readfds))
 	{
 		/* todo: */
-		printf("handle new connections\n");
+		//printf("handle new connections\n");
 		handle_connect_events(engine, WEB_HTTP);
 		nready--;
 	}
@@ -253,7 +253,7 @@ process_events(web_engine_t *engine, int nready, fd_set *readfds, fd_set *writef
 		nready--;
 	}
 
-	print_all_connections(&engine->conn_pool);
+	//print_all_connections(&engine->conn_pool);
 
 	conn = get_first_conn_from_pool(&engine->conn_pool);
 	while (conn != NULL && nready != 0)
@@ -276,7 +276,7 @@ process_events(web_engine_t *engine, int nready, fd_set *readfds, fd_set *writef
 					&& proc_conn->cgi->cgi_outfd >= 0
 					&& FD_ISSET(proc_conn->cgi->cgi_outfd, readfds))
 		{
-			web_log(WEB_LOG_DEBUG, "cgi fd is ready now .................\n");
+			//web_log(WEB_LOG_DEBUG, "cgi fd is ready now .................\n");
 			handle_cgi_read_events(proc_conn);
 			nready--;
 		}

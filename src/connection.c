@@ -254,7 +254,6 @@ add_conn_to_pool(web_conn_pool_t *pool, web_connection_t *conn)
 
 	slist_add_tail((slist_node_t **)&pool->conn_list_head, (slist_node_t *)conn);
 	pool->size++;
-	//print_all_connections(pool);
 }
 
 
@@ -289,7 +288,10 @@ free_connection(web_connection_t *conn)
 	if (conn->cgi != NULL)
 	{
 		if (conn->cgi->env != NULL)
+		{
 			cgi_free_env_table(conn->cgi->env);
+			conn->cgi->env = NULL;
+		}
 		free(conn->cgi);
 		conn->cgi = NULL;
 	}
