@@ -23,7 +23,7 @@ OBJECTS += hash.o
 OBJECTS += util.o
 OBJECTS += ssl.o
 OBJECTS += cgi.o
-
+OBJECTS += daemon.o
 
 default: webos
 
