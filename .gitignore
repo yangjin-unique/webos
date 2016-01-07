@@ -1,6 +1,9 @@
 *.[oa]
 *~
 tags
+*cscope*
 *.swp
 www
 log
+lock_file
+flask/flaskr.pyc

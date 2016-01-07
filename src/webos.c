@@ -17,8 +17,9 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include "web_engine.h"
-#include "http.h"
+//#include "core.h"
+//#include "http.h"
+#include "core.h"
 #include "log.h"
 #include <string.h>
 #include "daemon.h"
@@ -29,6 +30,7 @@
  * eg: sudo ./webos 80 443 www log CA/private/server.key CA/certs/server.crt
  * flask/cgi_script.py lock_file
  */
+#define MAX_PATH_NAME   128
 
 char g_www_root_folder[MAX_PATH_NAME];
 char g_cgi_folder[MAX_PATH_NAME];
@@ -38,6 +40,7 @@ main(int argc, char **argv)
 {
 	char *log_file;
 	char *lock_file;
+    int http_port, https_port;
 
 	web_engine_t engine;
 	
@@ -47,8 +50,8 @@ main(int argc, char **argv)
 		return -1;
 	}
 	memset(&engine, 0, sizeof(engine));
-	engine.http_port = atoi(argv[1]);
-	engine.https_port = atoi(argv[2]);
+	http_port = atoi(argv[1]);
+	https_port = atoi(argv[2]);
 	strcpy(g_www_root_folder, argv[3]);
 	log_file = argv[4];
 	engine.key = argv[5];
@@ -62,11 +65,12 @@ main(int argc, char **argv)
 		fprintf(stderr, "open lock_file failed\n");
 		return -1;
 	}
-	web_engine_creat(&engine);
-	
-	web_log(WEB_LOG_EVENT, "Web server starting on port %d\n", engine.http_port);
+	//web_engine_creat(&engine);
+	core_engine_init(&engine, http_port, https_port);
+	web_log(WEB_LOG_EVENT, "Web server starting on port %d\n", http_port);
 
-	web_engine_event_loop(&engine);
+	//web_engine_event_loop(&engine);
+    core_engine_run();
 	return 0;
 }
 

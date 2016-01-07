@@ -14,9 +14,9 @@ CLIB = -lssl -lcrypto
 SOURCE = src
 VPATH = $(SOURCE)
 OBJECTS = webos.o
-OBJECTS += web_engine.o
+#OBJECTS += web_engine.o
 OBJECTS += connection.o
-OBJECTS += http.o
+#OBJECTS += http.o
 OBJECTS += log.o
 OBJECTS += slist.o
 OBJECTS += hash.o
@@ -24,13 +24,18 @@ OBJECTS += util.o
 OBJECTS += ssl.o
 OBJECTS += cgi.o
 OBJECTS += daemon.o
+OBJECTS += listen.o
+OBJECTS += event.o
+OBJECTS += listen.o
+OBJECTS += core.o
+
 
 default: webos
 
 webos: $(OBJECTS)
 	$(CC) $(CFLAGS) -o webos $(OBJECTS) $(CLIB)
 
-$(SOURCE)/%.o: common.h
+$(SOURCE)/%.o: common.h list.h
 	$(build-cmd)
 
 .PHONY: clean

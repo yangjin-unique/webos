@@ -32,6 +32,8 @@
 
 #define LISTEN_QUEUE_SIZE	1024
 
+#if COMMENT
+
 int 
 web_sock_open(int port)
 {
@@ -314,4 +316,58 @@ remove_conn_from_pool(web_conn_pool_t *pool, web_connection_t *conn)
 	//print_all_connections(pool);
 }
 
+#endif
 
+
+void
+connection_write_handler(event_data_t *ev_data)
+{
+    //connection_t *conn = (connection_t *)ev_data->data;
+
+    
+}
+
+
+static void
+connection_read_handler(event_data_t *ev_data)
+{
+    connection_t *conn = (connection_t *) ev_data->data;
+    ssize_t n;
+
+    n = read(conn->fd, conn->rbuf, 2048);
+    if (n <= 0) {
+        printf("read failed: n = %d\n", n);
+        return;
+    }
+    conn->rbuf[n] = 0;
+    printf("read conn fd: %d\n", conn->fd);
+    printf("read content: %s\n", conn->rbuf);
+}
+
+static connection_t *
+connection_alloc(void)
+{
+    connection_t *conn;
+
+    conn = (connection_t *) malloc(sizeof(connection_t));
+    if (conn == NULL) {
+        web_log(WEB_LOG_ERROR, "connection alloc failed\n");
+        return NULL;
+    }
+    memset(conn, 0, sizeof(connection_t));
+    return conn;
+}
+
+void
+connection_add(int fd)
+{
+    connection_t *conn = connection_alloc();
+
+    printf("connection add\n");
+    assert(conn);
+    conn->fd = fd;
+    conn->r_ev_data.data = conn;
+    conn->r_ev_data.fd = fd;
+    conn->r_ev_data.ev_handler = connection_read_handler;
+    event_add(&conn->r_ev_data, EVENT_TYPE_READ);
+}

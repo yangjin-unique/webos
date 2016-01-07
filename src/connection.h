@@ -21,6 +21,7 @@
 #include "common.h"
 #include "cgi.h"
 
+#if COMMENT
 /* connection flag bit use */
 #define CONN_FLAG_CLOSE			0x0001 /* connection to be closed */
 #define	CONN_FLAG_WRITE			0x0002 /* conn has data to write */
@@ -97,5 +98,22 @@ web_connection_t * alloc_http_connection(int fd, struct sockaddr_in *cliaddr, so
 void print_all_connections(web_conn_pool_t *pool);
 void add_conn_to_pool(web_conn_pool_t *pool, web_connection_t *conn);
 void remove_conn_from_pool(web_conn_pool_t *pool, web_connection_t *conn);
+#endif
 
+#include "event.h"
+#include "os.h"
+
+typedef struct _connection_t {
+    //void *data;
+    int fd; /* connection fd */
+    event_data_t r_ev_data;
+    //event_data_t w_ev_data;
+    char rbuf[2048];
+    //os_recv_handler_t recv;
+    //os_send_handler_t send;
+    struct _connection_t *next; /* used for free connections list */
+} connection_t;
+
+
+void connection_add(int fd);
 #endif
