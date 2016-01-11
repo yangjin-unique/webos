@@ -15,9 +15,20 @@
  *
  * =====================================================================================
  */
-
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <assert.h>
 #include "os.h"
+#include "log.h"
 
+#define LISTEN_QUEUE_SIZE   20
 
 int 
 os_open_listen_sock(int port)
@@ -28,7 +39,7 @@ os_open_listen_sock(int port)
 
 	bzero(&servaddr, sizeof(servaddr));
 	sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (sock == -1)
+	if (sock < 0)
 	{
 		web_log(WEB_LOG_ERROR, "socket creating failed (cause: %s)\n", strerror(errno));
 		exit(-1);
@@ -43,12 +54,13 @@ os_open_listen_sock(int port)
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons(port);
 	servaddr.sin_addr.s_addr = INADDR_ANY;
-
+printf("yangjin111\n");
 	if (bind(sock, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
 	{
-		web_log(WEB_LOG_ERROR, "bind failed (cause: %s)\n", strerror(errno));
+		web_log(WEB_LOG_ERROR, "bind port(%d) failed (cause: %s)\n", port, strerror(errno));
 		exit(-1);
 	}
+printf("yangjin222\n");
 
 	if (listen(sock, LISTEN_QUEUE_SIZE) < 0)
 	{
@@ -96,6 +108,7 @@ os_buf_malloc(int len)
     buf->len = len;
     buf->pos = buf->data;
     buf->end = buf->data + len;
+    return buf;
 }
 
 

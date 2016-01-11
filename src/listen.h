@@ -19,6 +19,7 @@
 #ifndef _LISTEN_H_
 #define _LISTEN_H_
 
+#include "event.h"
 
 typedef struct _listen_opt_t listen_opt_t;
 

@@ -20,14 +20,13 @@
 #include <sys/types.h>
 #include <string.h>
 #include <errno.h>
-#include "event.h"
 #include "listen.h"
 #include "log.h"
 #include "os.h"
-#include "connection.c"
+#include "connection.h"
 
 
-void
+static void
 listen_event_handler(event_data_t *ev_data)
 {
     listen_opt_t *opt = (listen_opt_t *) ev_data->data;

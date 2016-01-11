@@ -39,7 +39,7 @@ int
 main(int argc, char **argv)
 {
 	char *log_file;
-	char *lock_file;
+	//char *lock_file;
     int http_port, https_port;
 
 	web_engine_t engine;
@@ -57,18 +57,24 @@ main(int argc, char **argv)
 	engine.key = argv[5];
 	engine.cert = argv[6];
 	strcpy(g_cgi_folder, argv[7]);
-	lock_file = argv[8];
+	//lock_file = argv[8];
 
+    /* initialize modules */
 	log_init(log_file);
+    event_core_init();
+#if 0
 	if (daemonize(lock_file) < 0)
 	{
 		fprintf(stderr, "open lock_file failed\n");
 		return -1;
 	}
+#endif
+    printf("port1=%d, port2=%d\n", http_port, https_port);
 	//web_engine_creat(&engine);
 	core_engine_init(&engine, http_port, https_port);
 	web_log(WEB_LOG_EVENT, "Web server starting on port %d\n", http_port);
 
+    printf("port1111=%d, port2222=%d\n", http_port, https_port);
 	//web_engine_event_loop(&engine);
     core_engine_run();
 	return 0;

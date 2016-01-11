@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include "queue.h"
 #include "event.h"
 
 #define USE_SELECT_MODULE   1
@@ -10,16 +9,16 @@ static queue_t g_posted_events;
 static queue_t g_posted_accept_events;
 
 #if USE_SELECT_MODULE
-extern event_module_t *select_module;
+extern event_module_t select_module;
 #endif
 
 void
 event_core_init(void)
 {
 #if USE_EPOLL_MODULE
-    g_event_module_used = epoll_module;
+    g_event_module_used = &epoll_module;
 #elif USE_SELECT_MODULE
-    g_event_module_used = select_module;
+    g_event_module_used = &select_module;
 #endif
     g_event_module_used->init_module();
 

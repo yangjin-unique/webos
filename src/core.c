@@ -1,6 +1,9 @@
+#include <stdlib.h>
 #include "event.h"
 #include "listen.h"
 #include "core.h"
+
+int g_termin_service = 0;
 
 void
 core_engine_init(web_engine_t *engine, int http_port, int https_port)

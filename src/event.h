@@ -1,6 +1,7 @@
 #ifndef _EVENT_H_
 #define _EVENT_H_
 
+#include "queue.h"
 
 typedef struct _event_data event_data_t;
 typedef void (*ev_handler_t) (event_data_t *);
@@ -32,9 +33,9 @@ typedef enum {
 
 /* interface between event core and downside layer, e.g. epoll/select module */
 typedef struct _event_ops {
-    r_status_t (*event_add) (event_data_t *ev_data, event_type_t type);
-    r_status_t (*event_del) (event_data_t *ev_data, event_type_t type);
-    r_status_t (*event_dispatch) (void);
+    r_status_t (*event_ops_add) (event_data_t *ev_data, event_type_t type);
+    r_status_t (*event_ops_del) (event_data_t *ev_data, event_type_t type);
+    r_status_t (*event_ops_dispatch) (void);
 } event_ops_t;
 
 
@@ -49,10 +50,14 @@ typedef struct _event_module {
 extern event_module_t *g_event_module_used;
 
 
+/* 
+ * TODO: move following APIs to a different file, as these APIs are 
+ * exposed to upper layer
+ */
 /* event core APIs for upper layer (http module) */
-#define event_add   g_event_module_used->ev_ops.event_add
-#define event_del   g_event_module_used->ev_ops.event_del
-#define event_dispatch g_event_module_used->ev_ops.event_dispatch
+#define event_add   g_event_module_used->ev_ops.event_ops_add
+#define event_del   g_event_module_used->ev_ops.event_ops_del
+#define event_dispatch g_event_module_used->ev_ops.event_ops_dispatch
 
 void event_core_init(void);
 void ev_post_event(event_data_t *ev_data);

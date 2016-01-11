@@ -17,6 +17,7 @@ OBJECTS = webos.o
 #OBJECTS += web_engine.o
 OBJECTS += connection.o
 #OBJECTS += http.o
+OBJECTS += os.o
 OBJECTS += log.o
 OBJECTS += slist.o
 OBJECTS += hash.o
@@ -26,7 +27,7 @@ OBJECTS += cgi.o
 OBJECTS += daemon.o
 OBJECTS += listen.o
 OBJECTS += event.o
-OBJECTS += listen.o
+OBJECTS += select.o
 OBJECTS += core.o
 
 
@@ -37,6 +38,8 @@ webos: $(OBJECTS)
 
 $(SOURCE)/%.o: common.h list.h
 	$(build-cmd)
+
+event.o: select.o
 
 .PHONY: clean
 
