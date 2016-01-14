@@ -3,7 +3,7 @@
  *
  *       Filename:  listen.c
  *
- *    Description:  
+ *    Description: listen module 
  *
  *        Version:  1.0
  *        Created:  10/19/2015 06:51:02 PM
@@ -55,6 +55,7 @@ listen_init(listen_opt_t *opt, int port)
     opt->ev_data.data = opt;
     opt->ev_data.accept = 1;
     opt->ev_data.write = 0; /* read event */
+    opt->ev_data.fd = opt->fd;
     opt->ev_data.ev_handler = listen_event_handler;
     /* add listen event */
     event_add(&opt->ev_data, EVENT_TYPE_READ);

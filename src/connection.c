@@ -6,7 +6,7 @@
  *    Description: connection layer under select engine. we put all active connections
  *				   in a poll.
  *
- *        Version:  1.0
+ *        Version:  2.0
  *       Revision:  none
  *       Compiler:  gcc
  *
@@ -334,6 +334,7 @@ connection_read_handler(event_data_t *ev_data)
     connection_t *conn = (connection_t *) ev_data->data;
     ssize_t n;
 
+    printf("connection read handler: fd=%d\n", conn->fd);
     n = read(conn->fd, conn->rbuf, 2048);
     if (n <= 0) {
         printf("read failed: n = %d\n", n);

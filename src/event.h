@@ -1,3 +1,19 @@
+/*
+ *
+ * =====================================================================================
+ *
+ *       Filename:  event.h
+ *
+ *    Description:  
+ *
+ *        Version:  2.0
+ *       Revision:  none
+ *       Compiler:  gcc
+ *
+ *         Author:  yangjin (), jinyang.hust@gmail.com
+ *
+ * =====================================================================================
+ */
 #ifndef _EVENT_H_
 #define _EVENT_H_
 

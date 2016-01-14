@@ -5,7 +5,7 @@
  *
  *    Description:  
  *
- *        Version:  1.0
+ *        Version:  2.0
  *        Created:  10/19/2015 07:21:49 PM
  *       Revision:  none
  *       Compiler:  gcc
@@ -54,13 +54,11 @@ os_open_listen_sock(int port)
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons(port);
 	servaddr.sin_addr.s_addr = INADDR_ANY;
-printf("yangjin111\n");
 	if (bind(sock, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
 	{
 		web_log(WEB_LOG_ERROR, "bind port(%d) failed (cause: %s)\n", port, strerror(errno));
 		exit(-1);
 	}
-printf("yangjin222\n");
 
 	if (listen(sock, LISTEN_QUEUE_SIZE) < 0)
 	{

@@ -1,7 +1,24 @@
+/*
+ *
+ * =====================================================================================
+ *
+ *       Filename:  core.c
+ *
+ *    Description: core loop engine  
+ *
+ *        Version:  2.0
+ *       Revision:  none
+ *       Compiler:  gcc
+ *
+ *         Author:  yangjin (), jinyang.hust@gmail.com
+ *
+ * =====================================================================================
+ */
 #include <stdlib.h>
 #include "event.h"
 #include "listen.h"
 #include "core.h"
+#include "log.h"
 
 int g_termin_service = 0;
 
@@ -19,9 +36,9 @@ core_engine_run(void)
         if (g_termin_service) {
             break;
         }
-        printf("core event dispatch\n");
+        web_log(WEB_LOG_EVENT, "core event dispatch\n");
         event_dispatch();
-        printf("core events processing\n");
+        web_log(WEB_LOG_EVENT, "core events processing\n");
         ev_process_all_events();
     }
 }

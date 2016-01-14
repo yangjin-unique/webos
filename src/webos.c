@@ -5,7 +5,7 @@
  *
  *    Description:  main web server exec routine
  *
- *        Version:  1.0
+ *        Version:  c.0
  *       Revision:  none
  *       Compiler:  gcc
  *
@@ -69,13 +69,8 @@ main(int argc, char **argv)
 		return -1;
 	}
 #endif
-    printf("port1=%d, port2=%d\n", http_port, https_port);
-	//web_engine_creat(&engine);
 	core_engine_init(&engine, http_port, https_port);
-	web_log(WEB_LOG_EVENT, "Web server starting on port %d\n", http_port);
-
-    printf("port1111=%d, port2222=%d\n", http_port, https_port);
-	//web_engine_event_loop(&engine);
+	web_log(WEB_LOG_EVENT, "Web server starting on port %d, %d\n", http_port, https_port);
     core_engine_run();
 	return 0;
 }

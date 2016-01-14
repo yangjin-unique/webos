@@ -7,3 +7,5 @@ www
 log
 lock_file
 flask/flaskr.pyc
+core
+webos
