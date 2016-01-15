@@ -49,8 +49,8 @@ typedef enum {
 
 /* interface between event core and downside layer, e.g. epoll/select module */
 typedef struct _event_ops {
-    r_status_t (*event_ops_add) (event_data_t *ev_data, event_type_t type);
-    r_status_t (*event_ops_del) (event_data_t *ev_data, event_type_t type);
+    r_status_t (*event_ops_add) (event_data_t *ev_data);
+    r_status_t (*event_ops_del) (event_data_t *ev_data);
     r_status_t (*event_ops_dispatch) (void);
 } event_ops_t;
 

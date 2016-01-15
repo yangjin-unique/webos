@@ -25,6 +25,7 @@
 #include "os.h"
 #include "connection.h"
 
+int g_num_conn = 0;
 
 static void
 listen_event_handler(event_data_t *ev_data)
@@ -35,7 +36,14 @@ listen_event_handler(event_data_t *ev_data)
     socklen_t slen = sizeof(client);
     
     memset(&client, 0, slen);
+    printf("Listrn: listen event handler\n");
     fd = accept(opt->fd, (struct sockaddr*) &client, &slen);
+    if (fd < 0) {
+        web_log(WEB_LOG_ERROR, "Listen: accept failed (%s)\n", strerror(errno));
+    }
+    os_set_nonblock(fd);
+    g_num_conn++;
+    printf("Listen: accept a connection: fd=%d (total conn=%d)\n", fd, g_num_conn);
     if (fd < 0) {
         web_log(WEB_LOG_ERROR, "listen: accept error - %s", strerror(errno));
         return;
@@ -58,7 +66,7 @@ listen_init(listen_opt_t *opt, int port)
     opt->ev_data.fd = opt->fd;
     opt->ev_data.ev_handler = listen_event_handler;
     /* add listen event */
-    event_add(&opt->ev_data, EVENT_TYPE_READ);
+    event_add(&opt->ev_data);
     return;
 }
 

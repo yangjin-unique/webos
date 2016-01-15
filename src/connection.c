@@ -317,6 +317,27 @@ remove_conn_from_pool(web_conn_pool_t *pool, web_connection_t *conn)
 }
 
 #endif
+static connection_t *
+connection_alloc(void)
+{
+    connection_t *conn;
+
+    conn = (connection_t *) malloc(sizeof(connection_t));
+    if (conn == NULL) {
+        web_log(WEB_LOG_ERROR, "connection alloc failed\n");
+        return NULL;
+    }
+    memset(conn, 0, sizeof(connection_t));
+    return conn;
+}
+
+
+static void
+connection_destroy(connection_t *conn)
+{
+    assert(conn);
+    free(conn);
+}
 
 
 void
@@ -337,27 +358,21 @@ connection_read_handler(event_data_t *ev_data)
     printf("connection read handler: fd=%d\n", conn->fd);
     n = read(conn->fd, conn->rbuf, 2048);
     if (n <= 0) {
-        printf("read failed: n = %d\n", n);
+        printf("read failed: n = %d (%s), close connection\n", n, strerror(errno));
+        close(conn->fd);
+        event_del(ev_data);
+        connection_destroy(conn);
         return;
     }
     conn->rbuf[n] = 0;
     printf("read conn fd: %d\n", conn->fd);
     printf("read content: %s\n", conn->rbuf);
-}
-
-static connection_t *
-connection_alloc(void)
-{
-    connection_t *conn;
-
-    conn = (connection_t *) malloc(sizeof(connection_t));
-    if (conn == NULL) {
-        web_log(WEB_LOG_ERROR, "connection alloc failed\n");
-        return NULL;
+    /* for test */
+    if (write(conn->fd, conn->rbuf, n) != n) {
+        web_log(WEB_LOG_EVENT, "write failed\n");
     }
-    memset(conn, 0, sizeof(connection_t));
-    return conn;
 }
+
 
 void
 connection_add(int fd)
@@ -370,5 +385,5 @@ connection_add(int fd)
     conn->r_ev_data.data = conn;
     conn->r_ev_data.fd = fd;
     conn->r_ev_data.ev_handler = connection_read_handler;
-    event_add(&conn->r_ev_data, EVENT_TYPE_READ);
+    event_add(&conn->r_ev_data);
 }

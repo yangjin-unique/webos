@@ -65,6 +65,7 @@ os_open_listen_sock(int port)
 		web_log(WEB_LOG_ERROR, "listen on socket failed (cause: %s)\n", strerror(errno));
 		exit(-1);
 	}
+    os_set_nonblock(sock);
 
 	return sock;
 }
@@ -79,7 +80,7 @@ os_set_nonblock(int fd)
 	flag = fcntl(fd, F_GETFL, 0);
 	if (fcntl(fd, F_SETFL, flag | O_NONBLOCK) < 0)
 	{
-		web_log(WEB_LOG_ERROR, "connection fd set nonblock failed (cause: %s)\n", strerror(errno));
+		web_log(WEB_LOG_ERROR, "connection fd=%d set nonblock failed (cause: %s)\n", fd, strerror(errno));
 		return -1;
 	}
 	return 0;

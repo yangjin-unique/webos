@@ -29,8 +29,8 @@
 
 static void select_module_init(void);
 static void select_module_deinit(void);
-static r_status_t select_add_event(event_data_t *ev_data, event_type_t type); 
-static r_status_t select_del_event(event_data_t *ev_data, event_type_t type);
+static r_status_t select_add_event(event_data_t *ev_data); 
+static r_status_t select_del_event(event_data_t *ev_data);
 static r_status_t select_process_event(void);
 
 
@@ -63,7 +63,7 @@ select_module_deinit(void)
 }
 
 static r_status_t
-select_add_event(event_data_t *ev_data, event_type_t type)
+select_add_event(event_data_t *ev_data)
 {
     if (g_num_events > MAX_NUM_OF_EVENT) {
         web_log(WEB_LOG_ERROR, "error: events full");
@@ -82,7 +82,7 @@ select_add_event(event_data_t *ev_data, event_type_t type)
  *  position.
  */
 static r_status_t
-select_del_event(event_data_t *ev_data, event_type_t type)
+select_del_event(event_data_t *ev_data)
 {
     int index = ev_data->index;
 
@@ -107,11 +107,14 @@ select_process_event(void)
     fd_set rset;
 
     FD_ZERO(&rset);
+    printf("------------------Select---------------\n");
     for (i = 0; i < g_num_events; i++) {
+        printf("fd=%d\n", g_event_array[i]->fd);
         FD_SET(g_event_array[i]->fd, &rset);
         if (g_event_array[i]->fd > maxfd) 
             maxfd = g_event_array[i]->fd;
     }
+    printf("------------------End------------------\n\n");
     maxfd += 1;
     web_log(WEB_LOG_EVENT, "Select: process event...\n"); 
     nready = select(maxfd, &rset, NULL, NULL, NULL);

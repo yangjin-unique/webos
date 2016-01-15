@@ -80,10 +80,11 @@ ev_process_posted_events(queue_t *queue)
         q = queue_head(queue);
         ev_data = queue_entry(q, event_data_t, queue);
         assert(ev_data->ev_handler);
+        printf("ev_process: start to process an event: fd=%d total events=%d\n", ev_data->fd, g_num_events);
         ev_data->ev_handler(ev_data);
         queue_del(q);
         g_num_events--;
-        printf("ev_process: process an event: total events=%d\n", g_num_events);
+        printf("ev_process: finish process an event: total events=%d\n", g_num_events);
     }
 }
 
