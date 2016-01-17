@@ -108,6 +108,7 @@ select_process_event(void)
 
     FD_ZERO(&rset);
     printf("------------------Select---------------\n");
+    web_log(WEB_LOG_EVENT, "Total # fds: %d\n", g_num_events);
     for (i = 0; i < g_num_events; i++) {
         printf("fd=%d\n", g_event_array[i]->fd);
         FD_SET(g_event_array[i]->fd, &rset);

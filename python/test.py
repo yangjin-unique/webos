@@ -34,10 +34,11 @@ for i in xrange(numTrials):
 		
     print "----------------------------------"
     print "Begin to read"
+    raw_input("Input: ")
     for j in xrange(numWritesReads):
 	data = socketList[j].recv(len(buf))
 	if (data != buf):
-            sys.stderr.write("Error: data received is not the same ad sent! recv:\n" + data)
+            sys.stderr.write("Error: data received is not the same ad sent! recv: (%d, %s)" %(j, data))
 	    sys.exit(1)
         else:
             print "read correctly"
