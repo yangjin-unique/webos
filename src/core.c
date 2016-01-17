@@ -26,7 +26,7 @@ void
 core_engine_init(web_engine_t *engine, int http_port, int https_port)
 {
     listen_init(&engine->http, http_port); 
-    //listen_init(&engine->https, https_port); 
+    listen_init(&engine->https, https_port); 
 }
 
 void

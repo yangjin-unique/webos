@@ -44,8 +44,7 @@ main(int argc, char **argv)
 
 	web_engine_t engine;
 	
-	if (argc < 8)
-	{
+	if (argc < 8) {
 		fprintf(stdout, USAGE, argv[0]);
 		return -1;
 	}
