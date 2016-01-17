@@ -4,45 +4,32 @@
 # Jin <jinyang.hust@gmail.com>
 #
 
-define build-cmd
-$(CC) $(CFLAGS) $< -o $@
-endef
-
 CC = gcc
-CFLAGS = -g -Wall -Werror -O2 
+CFLAGS = -g -Wall -Werror -O2 -Iinclude
 CLIB = -lssl -lcrypto
-SOURCE = src
-VPATH = $(SOURCE)
-OBJECTS = webos.o
-#OBJECTS += web_engine.o
-OBJECTS += connection.o
-#OBJECTS += http.o
-OBJECTS += os.o
-OBJECTS += log.o
-OBJECTS += slist.o
-OBJECTS += hash.o
-OBJECTS += util.o
-OBJECTS += ssl.o
-OBJECTS += cgi.o
-OBJECTS += daemon.o
-OBJECTS += listen.o
-OBJECTS += event.o
-OBJECTS += select.o
-OBJECTS += core.o
+
+SOURCES = $(wildcard src/*.c)
+NO_DIR_SRC = $(notdir $(SOURCES))
+OBJECTS = $(patsubst %.c, objs/%.o, $(NO_DIR_SRC))
+
+TARGET = webos
 
 
-default: webos
+all: build $(TARGET)
 
-webos: $(OBJECTS)
-	$(CC) $(CFLAGS) -o webos $(OBJECTS) $(CLIB)
+$(TARGET): $(OBJECTS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) $(CLIB)
 
-$(SOURCE)/%.o: common.h list.h
-	$(build-cmd)
+objs/%.o: src/%.c
+	$(CC) -c $(CFLAGS) $< -o $@
 
-event.o: select.o
+listen.o: connection.o
+
+build:
+	@mkdir -p objs
 
 .PHONY: clean
 
 clean:
 	-rm -f webos
-	-rm ./*.o
+	-rm -rf objs/

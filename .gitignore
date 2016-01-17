@@ -9,3 +9,4 @@ lock_file
 flask/flaskr.pyc
 core
 webos
+objs/*
