@@ -12,6 +12,9 @@ SOURCES = $(wildcard src/*.c)
 NO_DIR_SRC = $(notdir $(SOURCES))
 OBJECTS = $(patsubst %.c, objs/%.o, $(NO_DIR_SRC))
 
+DIRS = $(wildcard *)
+TEST_DIR_ALL_FILES = $(foreach dir, $(DIRS),$(wildcard $(dir)/*))
+
 TARGET = webos
 
 
@@ -23,13 +26,15 @@ $(TARGET): $(OBJECTS)
 objs/%.o: src/%.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
-listen.o: connection.o
 
 build:
+	@echo "list all files"
+	@echo $(DIRS)
+	@echo $(TEST_DIR_ALL_FILES)
 	@mkdir -p objs
 
 .PHONY: clean
 
 clean:
-	-rm -f webos
+	-rm -f webos log
 	-rm -rf objs/

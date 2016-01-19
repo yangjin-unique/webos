@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include "event.h"
 #include "listen.h"
+#include "connection.h"
 #include "core.h"
 #include "log.h"
 
@@ -25,6 +26,7 @@ int g_termin_service = 0;
 void
 core_engine_init(web_engine_t *engine, int http_port, int https_port)
 {
+    connection_init(128);
     listen_init(&engine->http, http_port); 
     listen_init(&engine->https, https_port); 
 }

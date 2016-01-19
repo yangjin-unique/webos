@@ -1,4 +1,12 @@
-#webos: a little http/1.1 web server
+#webos: A Little HTTP/1.1 Web Server
+##File Description
+src/: all c source files;
+inlcude/: all header files;
+test/: test fils;
+flask/: cgi files;
+CA/: certificate used for https;
+www/: server hosted static files;
+objs/: object files;
 
 ##Usage:	
 	./webos [http_port] [https_port] [www_root_folder] [log_file] [server_key] [server_cert]

@@ -111,9 +111,10 @@ typedef struct _connection_t {
     char rbuf[2048];
     //os_recv_handler_t recv;
     //os_send_handler_t send;
-    struct _connection_t *next; /* used for free connections list */
+    struct list_head list; /* used for connection pool */
 } connection_t;
 
 
+void connection_init(int size);
 void connection_add(int fd);
 #endif

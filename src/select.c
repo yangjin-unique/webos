@@ -22,8 +22,9 @@
 #include <sys/time.h>
 #include "event.h"
 #include "log.h"
+#include <assert.h>
 
-#define MAX_NUM_OF_EVENT    2048 /* tunnable */
+#define MAX_NUM_OF_EVENT    1024
 #define ERROR_STR_LEN       128
 
 
@@ -66,7 +67,7 @@ static r_status_t
 select_add_event(event_data_t *ev_data)
 {
     if (g_num_events > MAX_NUM_OF_EVENT) {
-        web_log(WEB_LOG_ERROR, "error: events full");
+        web_log(WEB_LOG_ERROR, "Select error: events full");
         return RT_ERR;
     }
     g_event_array[g_num_events] = ev_data; 
@@ -79,7 +80,7 @@ select_add_event(event_data_t *ev_data)
 
 /**
  * @brief delete an event, and move the last event to the deleted event 
- *  position.
+ *        position.
  */
 static r_status_t
 select_del_event(event_data_t *ev_data)
@@ -110,6 +111,7 @@ select_process_event(void)
     printf("------------------Select---------------\n");
     web_log(WEB_LOG_EVENT, "Total # fds: %d\n", g_num_events);
     for (i = 0; i < g_num_events; i++) {
+        assert(g_event_array[i]->fd > 0);
         printf("fd=%d\n", g_event_array[i]->fd);
         FD_SET(g_event_array[i]->fd, &rset);
         if (g_event_array[i]->fd > maxfd) 

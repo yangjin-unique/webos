@@ -14,19 +14,20 @@
  *
  * =====================================================================================
  */
-
-#include <netinet/in.h>
-#include <netinet/ip.h>
 #include <stdio.h> 
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/time.h>
 #include "log.h"
-#include "slist.h"
+//#include "slist.h"
+#include "list.h"
 #include <errno.h>
 #include "connection.h"
 
@@ -317,37 +318,112 @@ remove_conn_from_pool(web_conn_pool_t *pool, web_connection_t *conn)
 }
 
 #endif
+
+/* TODO: keep following params configurable */
+#define MAX_PARALLEL_CONNECTION_SIZE    1024
+#define MAX_FREE_CONNECTION_SIZE        256
+/**
+ * connections pool management, use MRU (Most Recently Used) method 
+ * for a new connection
+ */
+typedef struct _conn_pool {
+   int32_t inuse; /* # of connections inuse */
+   int32_t free; /* # of free connections */
+   //struct list_head connections;
+   struct list_head free_connections;
+} conn_pool_t;
+
+static conn_pool_t g_conn_pool; /* connection pool instance */
+ 
+#define HAS_FREE_CONN(pool)     !list_empty(&(pool)->free_connections)
+
+
+void
+connection_init(int size)
+{
+    int i;
+    connection_t *conn = NULL;
+
+    memset(&g_conn_pool, 0, sizeof(conn_pool_t));
+    g_conn_pool.free = size;
+    INIT_LIST_HEAD(&g_conn_pool.free_connections);
+    for (i = 0; i < size; i++) {
+        conn = (connection_t *) calloc(sizeof(connection_t), 1);
+        if (conn == NULL) {
+            web_log(WEB_LOG_ERROR, "Connection pool malloc failed\n");
+            exit(-1);
+        }
+        list_add(&conn->list, &g_conn_pool.free_connections);
+    }
+    return;
+}
+
+
+/**
+ * Alloc a connection. Always use free connections first.
+ *
+ */
 static connection_t *
 connection_alloc(void)
 {
     connection_t *conn;
 
-    conn = (connection_t *) malloc(sizeof(connection_t));
+    if (HAS_FREE_CONN(&g_conn_pool)) {
+        printf("Conn pool: get from pool\n");
+        conn = list_entry(g_conn_pool.free_connections.next, connection_t, list); 
+        list_del(g_conn_pool.free_connections.next);
+        g_conn_pool.free--;
+        assert(g_conn_pool.free >= 0);
+        g_conn_pool.inuse++;
+        web_log(WEB_LOG_EVENT, "Connection pool: inuse=%d, free=%d\n", g_conn_pool.inuse, g_conn_pool.free);
+        return conn;
+    }
+    /* already no free connections, alloc a new one */
+    printf("Conn pool: alloc a new one\n");
+    conn = (connection_t *) calloc(sizeof(connection_t), 1);
     if (conn == NULL) {
         web_log(WEB_LOG_ERROR, "connection alloc failed\n");
         return NULL;
     }
-    memset(conn, 0, sizeof(connection_t));
+    g_conn_pool.inuse++;
+    web_log(WEB_LOG_EVENT, "Connection pool: inuse=%d, free=%d\n", g_conn_pool.inuse, g_conn_pool.free);
     return conn;
 }
 
 
+/**
+ * Destroy a connection. If number of free connections exceeds threshhold,
+ * return it to os, to avoid overuse of os memory.
+ *
+ */
 static void
 connection_destroy(connection_t *conn)
 {
     assert(conn);
-    free(conn);
+    if (g_conn_pool.free >= MAX_FREE_CONNECTION_SIZE) {
+        free(conn);
+        g_conn_pool.inuse--;
+        conn = NULL;
+        web_log(WEB_LOG_EVENT, "Connection pool: destroy (return to os) inuse=%d, free=%d\n", g_conn_pool.inuse, g_conn_pool.free);
+        return;
+    }
+    memset(conn, 0, sizeof(connection_t));
+    list_add(&conn->list, &g_conn_pool.free_connections);
+    g_conn_pool.free++;
+    g_conn_pool.inuse--;
+    web_log(WEB_LOG_EVENT, "Connection pool: destroy (return to pool) inuse=%d, free=%d\n", g_conn_pool.inuse, g_conn_pool.free);
+    return;
 }
 
-
-void
+#if 0
+static void
 connection_write_handler(event_data_t *ev_data)
 {
     //connection_t *conn = (connection_t *)ev_data->data;
 
     
 }
-
+#endif
 
 static void
 connection_read_handler(event_data_t *ev_data)
@@ -358,7 +434,7 @@ connection_read_handler(event_data_t *ev_data)
     printf("connection read handler: fd=%d\n", conn->fd);
     n = read(conn->fd, conn->rbuf, 2048);
     if (n <= 0) {
-        printf("read failed: n = %d (%s), close connection\n", n, strerror(errno));
+        web_log(WEB_LOG_EVENT, "Connection read failed: n = %d (%s), close connection\n", n, strerror(errno));
         close(conn->fd);
         event_del(ev_data);
         connection_destroy(conn);
