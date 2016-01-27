@@ -28,7 +28,7 @@ core_engine_init(web_engine_t *engine, int http_port, int https_port)
 {
     connection_init(128);
     listen_init(&engine->http, http_port); 
-    listen_init(&engine->https, https_port); 
+    //listen_init(&engine->https, https_port); 
 }
 
 void
@@ -38,9 +38,9 @@ core_engine_run(void)
         if (g_termin_service) {
             break;
         }
-        web_log(WEB_LOG_EVENT, "core event dispatch\n");
+        web_log(WEB_LOG_DEBUG, "core event dispatch\n");
         event_dispatch();
-        web_log(WEB_LOG_EVENT, "core events processing\n");
+        web_log(WEB_LOG_DEBUG, "core events processing\n");
         ev_process_all_events();
     }
 }

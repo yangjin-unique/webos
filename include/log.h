@@ -21,13 +21,14 @@
 #include <stdarg.h>
 #include <assert.h>
 
-#define WEB_LOG_CURRENT_LEVEL	WEB_LOG_DEBUG
+//TODO: user config
+#define WEB_LOG_CURRENT_LEVEL	WEB_LOG_WARNNING
 
 typedef enum {
 	WEB_LOG_DEBUG,
-	WEB_LOG_ERROR,
 	WEB_LOG_WARNNING,
 	WEB_LOG_EVENT,
+	WEB_LOG_ERROR,
 }log_level_t;
 
 

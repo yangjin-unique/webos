@@ -26,7 +26,8 @@ struct _event_data {
     void *data; 
     unsigned write   :1,
             accept  :1;
-    struct timeval *timeout;
+    struct timeval timeout;
+    struct list_head timer_list;
     int fd;
     int index; /* index to g_event_array */
     queue_t queue; /* posted events queue */

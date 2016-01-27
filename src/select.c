@@ -73,7 +73,7 @@ select_add_event(event_data_t *ev_data)
     g_event_array[g_num_events] = ev_data; 
     ev_data->index = g_num_events;
     g_num_events++;
-    web_log(WEB_LOG_EVENT, "Select: add a event, fd=%d, g_num_events=%d\n", ev_data->fd, g_num_events);
+    web_log(WEB_LOG_DEBUG, "Select: add a event, fd=%d, g_num_events=%d\n", ev_data->fd, g_num_events);
     return RT_OK;
 }
 
@@ -92,7 +92,7 @@ select_del_event(event_data_t *ev_data)
     g_event_array[index] = g_event_array[g_num_events];
     g_event_array[index]->index = index;
     ev_data->index = -1;
-    web_log(WEB_LOG_EVENT, "Select: del a event, g_num_events=%d\n", g_num_events);
+    web_log(WEB_LOG_DEBUG, "Select: del a event, g_num_events=%d\n", g_num_events);
     return RT_OK;
 }
 
@@ -104,38 +104,33 @@ select_process_event(void)
     int maxfd = 0;
     int nready;
     event_data_t *ev_data = NULL;
-    int found = 0;
     fd_set rset;
 
     FD_ZERO(&rset);
-    printf("------------------Select---------------\n");
-    web_log(WEB_LOG_EVENT, "Total # fds: %d\n", g_num_events);
+    web_log(WEB_LOG_DEBUG, "------------------Select---------------\n");
+    web_log(WEB_LOG_DEBUG, "Total # fds: %d\n", g_num_events);
     for (i = 0; i < g_num_events; i++) {
         assert(g_event_array[i]->fd > 0);
-        printf("fd=%d\n", g_event_array[i]->fd);
+        web_log(WEB_LOG_DEBUG, "fd=%d\n", g_event_array[i]->fd);
         FD_SET(g_event_array[i]->fd, &rset);
         if (g_event_array[i]->fd > maxfd) 
             maxfd = g_event_array[i]->fd;
     }
-    printf("------------------End------------------\n\n");
+    web_log(WEB_LOG_DEBUG, "------------------End------------------\n\n");
     maxfd += 1;
-    web_log(WEB_LOG_EVENT, "Select: process event...\n"); 
+    web_log(WEB_LOG_DEBUG, "Select: process event...\n"); 
     nready = select(maxfd, &rset, NULL, NULL, NULL);
     
-    web_log(WEB_LOG_EVENT, "Select: process event: %d events ready\n", nready); 
+    web_log(WEB_LOG_DEBUG, "Select: process event: %d events ready\n", nready); 
     if (nready == -1) {
-        char buf[ERROR_STR_LEN] = {0};
-        web_log(WEB_LOG_ERROR, "select error: %s", strerror(errno), buf, ERROR_STR_LEN);
+        web_log(WEB_LOG_ERROR, "select error: %s", strerror(errno));
         return RT_ERR;
     }
     else if (nready > 0) {
         for (i = 0; i < g_num_events && nready > 0; i++) {
             ev_data = g_event_array[i];
            
-            if (FD_ISSET(ev_data->fd, &rset))
-                found = 1;
-            
-            if (found) {
+            if (FD_ISSET(ev_data->fd, &rset)) {
                 ev_post_event(ev_data);
                 nready--;
             }

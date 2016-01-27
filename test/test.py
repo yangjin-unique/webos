@@ -36,7 +36,8 @@ for i in xrange(numTrials):
     for j in xrange(numConnections):
 	data = socketList[j].recv(len(buf))
 	if (data != buf):
-            sys.stderr.write("Error: data received is not the same ad sent! recv: (trial=%d, index=%d, %s)\n" %(i, j, data))
+            sys.stderr.write("Error: data received is not the same ad sent! recv:%s (size=%d,index=%d)\n"
+                    %(data, len(data), j))
 	    sys.exit(1)
 
 for i in xrange(numConnections):
