@@ -24,7 +24,7 @@
 #include "log.h"
 #include <assert.h>
 
-#define MAX_NUM_OF_EVENT    1024
+#define MAX_NUM_OF_EVENT    1024 /* FD_SETSIZE limit */
 #define ERROR_STR_LEN       128
 
 
@@ -54,6 +54,7 @@ static void
 select_module_init(void)
 {
     g_num_events = 0;
+    printf("FD_SETSIZE = %d\n", FD_SETSIZE);
 }
 
 

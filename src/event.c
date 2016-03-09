@@ -20,8 +20,8 @@
 #include "event.h"
 #include "log.h"
 
-#define USE_SELECT_MODULE   1
-//#define USE_EPOLL_MODULE    1
+//#define USE_SELECT_MODULE   1
+#define USE_EPOLL_MODULE    1
 
 event_module_t *g_event_module_used = NULL;
 
@@ -74,6 +74,7 @@ ev_post_event(event_data_t *ev_data)
 
 /**
  * Event core APIs
+ * @param queue head
  */
 void
 ev_process_posted_events(queue_t *queue)

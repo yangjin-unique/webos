@@ -9,7 +9,7 @@ import time
 
 serverHost = "127.0.0.1"
 serverPort = 80
-numConnections = [10, 100, 500, 1000, 2000]
+numConnections = [10, 100, 500, 1000, 2000, 10000]
 numTrials = len(numConnections)
 
 buf = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" #send content
